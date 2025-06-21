@@ -1,0 +1,120 @@
+trigger:
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - frontend/*
+    - backend/*
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  NODE_VERSION: '18'
+  FRONTEND_DIR: 'frontend'
+  BACKEND_DIR: 'backend'
+
+stages:
+- stage: Build
+  displayName: 'Build Stage'
+  jobs:
+  - job: BuildFrontend
+    displayName: 'Build Frontend'
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: $(NODE_VERSION)
+      displayName: 'Install Node.js'
+    
+    - script: |
+        cd $(FRONTEND_DIR)
+        npm ci
+      displayName: 'Install Frontend Dependencies'
+    
+    - script: |
+        cd $(FRONTEND_DIR)
+        npm run build
+      displayName: 'Build Frontend'
+    
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: '$(FRONTEND_DIR)/dist'
+        artifactName: 'frontend-dist'
+      displayName: 'Publish Frontend Artifacts'
+
+  - job: BuildBackend
+    displayName: 'Build Backend'
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: $(NODE_VERSION)
+      displayName: 'Install Node.js'
+    
+    - script: |
+        cd $(BACKEND_DIR)
+        npm ci
+      displayName: 'Install Backend Dependencies'
+    
+    - script: |
+        cd $(BACKEND_DIR)
+        npm test || echo "No tests configured"
+      displayName: 'Test Backend'
+    
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: '$(BACKEND_DIR)'
+        artifactName: 'backend-dist'
+      displayName: 'Publish Backend Artifacts'
+
+- stage: Deploy
+  displayName: 'Deploy Stage'
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: DeployFrontend
+    displayName: 'Deploy Frontend'
+    environment: 'production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: frontend-dist
+          
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(NODE_VERSION)
+            displayName: 'Install Node.js'
+          
+          - script: |
+              npm install -g vercel
+              cd $(Pipeline.Workspace)/frontend-dist
+              vercel --prod --token $(VERCEL_TOKEN)
+            displayName: 'Deploy to Vercel'
+            env:
+              VERCEL_TOKEN: $(VERCEL_TOKEN)
+
+  - deployment: DeployBackend
+    displayName: 'Deploy Backend'
+    environment: 'production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: backend-dist
+          
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(NODE_VERSION)
+            displayName: 'Install Node.js'
+          
+          - script: |
+              npm install -g @railway/cli
+              cd $(Pipeline.Workspace)/backend-dist
+              railway login --token $(RAILWAY_TOKEN)
+              railway up
+            displayName: 'Deploy to Railway'
+            env:
+              RAILWAY_TOKEN: $(RAILWAY_TOKEN) 

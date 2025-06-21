@@ -1,0 +1,126 @@
+{
+  "pipeline": {
+    "name": "WashTheWorldPipeline",
+    "roleArn": "arn:aws:iam::123456789012:role/AWSCodePipelineServiceRole",
+    "artifactStore": {
+      "type": "S3",
+      "location": "wash-the-world-artifacts"
+    },
+    "stages": [
+      {
+        "name": "Source",
+        "actions": [
+          {
+            "name": "Source",
+            "actionTypeId": {
+              "category": "Source",
+              "owner": "AWS",
+              "provider": "CodeCommit",
+              "version": "1"
+            },
+            "configuration": {
+              "RepositoryName": "my.pentashop.world",
+              "BranchName": "main"
+            },
+            "outputArtifacts": [
+              {
+                "name": "SourceCode"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Build",
+        "actions": [
+          {
+            "name": "BuildFrontend",
+            "actionTypeId": {
+              "category": "Build",
+              "owner": "AWS",
+              "provider": "CodeBuild",
+              "version": "1"
+            },
+            "configuration": {
+              "ProjectName": "WashTheWorldFrontendBuild"
+            },
+            "inputArtifacts": [
+              {
+                "name": "SourceCode"
+              }
+            ],
+            "outputArtifacts": [
+              {
+                "name": "FrontendBuild"
+              }
+            ]
+          },
+          {
+            "name": "BuildBackend",
+            "actionTypeId": {
+              "category": "Build",
+              "owner": "AWS",
+              "provider": "CodeBuild",
+              "version": "1"
+            },
+            "configuration": {
+              "ProjectName": "WashTheWorldBackendBuild"
+            },
+            "inputArtifacts": [
+              {
+                "name": "SourceCode"
+              }
+            ],
+            "outputArtifacts": [
+              {
+                "name": "BackendBuild"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Deploy",
+        "actions": [
+          {
+            "name": "DeployFrontend",
+            "actionTypeId": {
+              "category": "Deploy",
+              "owner": "AWS",
+              "provider": "S3",
+              "version": "1"
+            },
+            "configuration": {
+              "BucketName": "wash-the-world-frontend",
+              "Extract": "true"
+            },
+            "inputArtifacts": [
+              {
+                "name": "FrontendBuild"
+              }
+            ]
+          },
+          {
+            "name": "DeployBackend",
+            "actionTypeId": {
+              "category": "Deploy",
+              "owner": "AWS",
+              "provider": "ECS",
+              "version": "1"
+            },
+            "configuration": {
+              "ClusterName": "wash-the-world-cluster",
+              "ServiceName": "wash-the-world-backend",
+              "FileName": "imagedefinitions.json"
+            },
+            "inputArtifacts": [
+              {
+                "name": "BackendBuild"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+} 

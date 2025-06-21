@@ -1,0 +1,31 @@
+name: projects/$PROJECT_ID/locations/global/triggers/wash-the-world-trigger
+description: "Trigger for Wash The World Platform deployment"
+tags:
+  - "production"
+  - "wash-the-world"
+
+triggerTemplate:
+  projectId: $PROJECT_ID
+  repoName: my-pentashop-world
+  branchName: main
+
+filename: cloudbuild.yaml
+
+substitutions:
+  _NODE_VERSION: "18"
+  _REGION: "europe-west1"
+  _FRONTEND_SERVICE: "wash-the-world-frontend"
+  _BACKEND_SERVICE: "wash-the-world-backend"
+
+includedFiles:
+  - "frontend/**"
+  - "backend/**"
+  - "cloudbuild.yaml"
+
+ignoredFiles:
+  - "README.md"
+  - "docs/**"
+  - "*.md"
+
+approvalConfig:
+  approvalRequired: false 

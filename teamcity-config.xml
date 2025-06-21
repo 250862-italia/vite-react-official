@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <name>Wash The World Platform</name>
+  <description>Gestionale MLM &amp; E-commerce per Wavemaker/ambassador e amministratori</description>
+  
+  <build-types>
+    <build-type>
+      <name>Build Frontend</name>
+      <description>Build del frontend React</description>
+      <vcs-root-entries>
+        <vcs-root-entry>
+          <vcs-root-ref name="GitHub"/>
+        </vcs-root-entry>
+      </vcs-root-entries>
+      <settings>
+        <parameters>
+          <param name="NODE_VERSION" value="18"/>
+          <param name="FRONTEND_DIR" value="frontend"/>
+        </parameters>
+      </settings>
+      <steps>
+        <step>
+          <name>Install Dependencies</name>
+          <type>CommandLine</type>
+          <properties>
+            <property name="script.content" value="cd %FRONTEND_DIR% && npm ci"/>
+            <property name="script.executable" value="bash"/>
+          </properties>
+        </step>
+        <step>
+          <name>Build</name>
+          <type>CommandLine</type>
+          <properties>
+            <property name="script.content" value="cd %FRONTEND_DIR% && npm run build"/>
+            <property name="script.executable" value="bash"/>
+          </properties>
+        </step>
+      </steps>
+      <triggers>
+        <vcs-trigger>
+          <branch-filter>+:*</branch-filter>
+        </vcs-trigger>
+      </triggers>
+    </build-type>
+    
+    <build-type>
+      <name>Deploy Frontend</name>
+      <description>Deploy del frontend su Vercel</description>
+      <dependencies>
+        <dependency>
+          <build-type-ref name="Build Frontend"/>
+        </dependency>
+      </dependencies>
+      <settings>
+        <parameters>
+          <param name="VERCEL_TOKEN" value="%env.VERCEL_TOKEN%"/>
+        </parameters>
+      </settings>
+      <steps>
+        <step>
+          <name>Deploy to Vercel</name>
+          <type>CommandLine</type>
+          <properties>
+            <property name="script.content" value="npm install -g vercel && cd frontend && vercel --prod --token %VERCEL_TOKEN%"/>
+            <property name="script.executable" value="bash"/>
+          </properties>
+        </step>
+      </steps>
+      <triggers>
+        <vcs-trigger>
+          <branch-filter>+:main</branch-filter>
+        </vcs-trigger>
+      </triggers>
+    </build-type>
+    
+    <build-type>
+      <name>Deploy Backend</name>
+      <description>Deploy del backend su Railway</description>
+      <settings>
+        <parameters>
+          <param name="RAILWAY_TOKEN" value="%env.RAILWAY_TOKEN%"/>
+        </parameters>
+      </settings>
+      <steps>
+        <step>
+          <name>Deploy to Railway</name>
+          <type>CommandLine</type>
+          <properties>
+            <property name="script.content" value="npm install -g @railway/cli && cd backend && railway login --token %RAILWAY_TOKEN% && railway up"/>
+            <property name="script.executable" value="bash"/>
+          </properties>
+        </step>
+      </steps>
+      <triggers>
+        <vcs-trigger>
+          <branch-filter>+:main</branch-filter>
+        </vcs-trigger>
+      </triggers>
+    </build-type>
+  </build-types>
+</project> 

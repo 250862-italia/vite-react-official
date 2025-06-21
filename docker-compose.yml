@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    networks:
+      - wash-the-world
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - CORS_ORIGIN=http://localhost
+    networks:
+      - wash-the-world
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Database (opzionale per produzione)
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: wash_the_world
+      POSTGRES_USER: washuser
+      POSTGRES_PASSWORD: washpass123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - wash-the-world
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U washuser -d wash_the_world"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis per cache (opzionale)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - wash-the-world
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Nginx reverse proxy (opzionale)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - wash-the-world
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  wash-the-world:
+    driver: bridge 

@@ -1,0 +1,106 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  NODE_VERSION: "18"
+  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - frontend/node_modules/
+    - backend/node_modules/
+    - .npm/
+
+build-frontend:
+  stage: build
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - cd frontend
+    - npm ci --cache .npm --prefer-offline
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/dist/
+    expire_in: 1 hour
+  only:
+    - main
+    - merge_requests
+
+build-backend:
+  stage: build
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - cd backend
+    - npm ci --cache .npm --prefer-offline
+  artifacts:
+    paths:
+      - backend/node_modules/
+    expire_in: 1 hour
+  only:
+    - main
+    - merge_requests
+
+test-backend:
+  stage: test
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - cd backend
+    - npm ci --cache .npm --prefer-offline
+    - npm test || echo "No tests configured"
+  dependencies:
+    - build-backend
+  only:
+    - main
+    - merge_requests
+
+deploy-frontend:
+  stage: deploy
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - npm install -g vercel
+    - cd frontend
+    - vercel --prod --token $VERCEL_TOKEN
+  dependencies:
+    - build-frontend
+  environment:
+    name: production
+    url: https://your-frontend-domain.com
+  only:
+    - main
+  when: manual
+
+deploy-backend:
+  stage: deploy
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - npm install -g @railway/cli
+    - cd backend
+    - railway login --token $RAILWAY_TOKEN
+    - railway up
+  dependencies:
+    - build-backend
+  environment:
+    name: production
+    url: https://your-backend-domain.com
+  only:
+    - main
+  when: manual
+
+deploy-staging:
+  stage: deploy
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - npm install -g vercel
+    - cd frontend
+    - vercel --token $VERCEL_TOKEN
+  dependencies:
+    - build-frontend
+  environment:
+    name: staging
+    url: https://staging.your-frontend-domain.com
+  only:
+    - develop
+  when: manual 

@@ -1,0 +1,42 @@
+{
+  "name": "Wash The World Platform",
+  "description": "Gestionale MLM & E-commerce per Wavemaker/ambassador e amministratori",
+  "repository": "https://github.com/your-username/my.pentashop.world",
+  "logo": "https://your-domain.com/logo.png",
+  "keywords": ["node", "express", "react", "mlm", "ecommerce"],
+  "website": "https://your-domain.com",
+  "success_url": "/",
+  "env": {
+    "NODE_ENV": {
+      "description": "Environment",
+      "value": "production"
+    },
+    "PORT": {
+      "description": "Port for the backend",
+      "value": "5000"
+    },
+    "CORS_ORIGIN": {
+      "description": "Frontend URL for CORS",
+      "value": "https://your-frontend-domain.com"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:mini"
+    }
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "scripts": {
+    "postdeploy": "echo 'Deploy completed!'"
+  }
+} 

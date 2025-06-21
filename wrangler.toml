@@ -1,0 +1,26 @@
+name = "wash-the-world-platform"
+compatibility_date = "2024-01-01"
+
+[env.production]
+name = "wash-the-world-platform"
+route = "your-domain.com/*"
+
+[env.staging]
+name = "wash-the-world-platform-staging"
+route = "staging.your-domain.com/*"
+
+[build]
+command = "cd frontend && npm install && npm run build"
+upload.format = "service-worker"
+
+[site]
+bucket = "./frontend/dist"
+entry-point = "workers-site"
+
+[env.production.vars]
+NODE_ENV = "production"
+VITE_API_URL = "https://your-backend-domain.com"
+
+[env.staging.vars]
+NODE_ENV = "staging"
+VITE_API_URL = "https://your-backend-staging-domain.com" 

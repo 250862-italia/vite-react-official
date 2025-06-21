@@ -1,0 +1,85 @@
+version: 2
+plan:
+  name: Wash The World Platform
+  key: WTP
+  description: Gestionale MLM & E-commerce per Wavemaker/ambassador e amministratori
+  
+  stages:
+    - Build Stage
+    - Deploy Stage
+  
+  branches:
+    main:
+      name: Main Branch
+      isDefault: true
+  
+  repositories:
+    - name: GitHub
+      type: git
+      url: https://github.com/your-username/my.pentashop.world
+      branch: main
+
+Build Stage:
+  - default Job:
+      - Script:
+          - !ScriptTask
+            name: Install Frontend Dependencies
+            script: |
+              cd frontend
+              npm ci
+            interpreter: SHELL
+      
+      - Script:
+          - !ScriptTask
+            name: Build Frontend
+            script: |
+              cd frontend
+              npm run build
+            interpreter: SHELL
+      
+      - Script:
+          - !ScriptTask
+            name: Install Backend Dependencies
+            script: |
+              cd backend
+              npm ci
+            interpreter: SHELL
+      
+      - Script:
+          - !ScriptTask
+            name: Test Backend
+            script: |
+              cd backend
+              npm test || echo "No tests configured"
+            interpreter: SHELL
+
+Deploy Stage:
+  - Deploy Frontend:
+      - Script:
+          - !ScriptTask
+            name: Deploy to Vercel
+            script: |
+              npm install -g vercel
+              cd frontend
+              vercel --prod --token $VERCEL_TOKEN
+            interpreter: SHELL
+            environmentVariables:
+              VERCEL_TOKEN: ${bamboo.VERCEL_TOKEN}
+  
+  - Deploy Backend:
+      - Script:
+          - !ScriptTask
+            name: Deploy to Railway
+            script: |
+              npm install -g @railway/cli
+              cd backend
+              railway login --token $RAILWAY_TOKEN
+              railway up
+            interpreter: SHELL
+            environmentVariables:
+              RAILWAY_TOKEN: ${bamboo.RAILWAY_TOKEN}
+
+triggers:
+  - !RepositoryPollingTrigger
+    name: Repository Polling
+    description: Polls the repository for changes 

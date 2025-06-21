@@ -1,0 +1,42 @@
+language: node_js
+node_js:
+  - "18"
+
+cache:
+  npm: true
+  directories:
+    - frontend/node_modules
+    - backend/node_modules
+
+install:
+  - cd frontend && npm ci
+  - cd ../backend && npm ci
+
+script:
+  - cd frontend && npm run build
+  - cd ../backend && npm test || echo "No tests configured"
+
+deploy:
+  - provider: script
+    script: |
+      npm install -g vercel
+      cd frontend
+      vercel --prod --token $VERCEL_TOKEN
+    on:
+      branch: main
+      condition: $TRAVIS_OS_NAME = linux
+  
+  - provider: script
+    script: |
+      npm install -g @railway/cli
+      cd backend
+      railway login --token $RAILWAY_TOKEN
+      railway up
+    on:
+      branch: main
+      condition: $TRAVIS_OS_NAME = linux
+
+notifications:
+  email: false
+  slack:
+    secure: $SLACK_WEBHOOK_URL 

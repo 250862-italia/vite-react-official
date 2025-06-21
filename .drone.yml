@@ -1,0 +1,63 @@
+kind: pipeline
+type: docker
+name: build-and-deploy
+
+steps:
+  - name: build-frontend
+    image: node:18-alpine
+    commands:
+      - cd frontend
+      - npm ci
+      - npm run build
+    volumes:
+      - name: cache
+        path: /cache
+
+  - name: build-backend
+    image: node:18-alpine
+    commands:
+      - cd backend
+      - npm ci
+    volumes:
+      - name: cache
+        path: /cache
+
+  - name: deploy-frontend
+    image: plugins/vercel
+    settings:
+      token:
+        from_secret: vercel_token
+      project_id:
+        from_secret: vercel_project_id
+      team_id:
+        from_secret: vercel_team_id
+    when:
+      branch:
+        - main
+
+  - name: deploy-backend
+    image: plugins/ssh
+    settings:
+      host:
+        from_secret: ssh_host
+      username:
+        from_secret: ssh_username
+      password:
+        from_secret: ssh_password
+      script:
+        - cd /var/www/wash-the-world
+        - git pull origin main
+        - cd backend
+        - npm ci
+        - pm2 restart wash-the-world-backend
+    when:
+      branch:
+        - main
+
+volumes:
+  - name: cache
+    temp: {}
+
+trigger:
+  branch:
+    - main 

@@ -1,0 +1,48 @@
+image: node:18
+
+pipelines:
+  default:
+    - step:
+        name: Build and Test
+        caches:
+          - node
+        script:
+          - cd frontend
+          - npm ci
+          - npm run build
+          - cd ../backend
+          - npm ci
+        artifacts:
+          - frontend/dist/**
+    
+    - step:
+        name: Deploy Frontend
+        deployment: production
+        script:
+          - pipe: atlassian/bitbucket-pipe-pipe-aws-s3:1.0.0
+            variables:
+              AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+              AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+              AWS_DEFAULT_REGION: 'eu-west-1'
+              S3_BUCKET: 'wash-the-world-frontend'
+              LOCAL_PATH: 'frontend/dist'
+              ACL: 'public-read'
+    
+    - step:
+        name: Deploy Backend
+        deployment: production
+        script:
+          - pipe: atlassian/ssh-run:0.7.1
+            variables:
+              SSH_USER: $SSH_USER
+              SERVER: $SERVER
+              COMMAND: |
+                cd /var/www/wash-the-world
+                git pull origin main
+                cd backend
+                npm ci
+                pm2 restart wash-the-world-backend
+
+definitions:
+  caches:
+    node: node_modules 
