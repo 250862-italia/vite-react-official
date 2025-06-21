@@ -7,17 +7,9 @@
       "config": {
         "distDir": "frontend/dist"
       }
-    },
-    {
-      "src": "backend/src/index-simple.js",
-      "use": "@vercel/node"
     }
   ],
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/backend/src/index-simple.js"
-    },
     {
       "src": "/(.*)",
       "dest": "/frontend/$1"
@@ -25,10 +17,5 @@
   ],
   "env": {
     "NODE_ENV": "production"
-  },
-  "functions": {
-    "backend/src/index-simple.js": {
-      "maxDuration": 30
-    }
   }
 } 
