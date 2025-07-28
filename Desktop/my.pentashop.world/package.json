@@ -1,0 +1,34 @@
+{
+  "name": "wash-the-world",
+  "version": "1.0.0",
+  "description": "🚀 Wash The World Platform - Gestionale MLM & E-commerce",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "start": "cd backend && npm start",
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "cd frontend && npm test",
+    "test:backend": "cd backend && npm test",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install"
+  },
+  "keywords": [
+    "mlm",
+    "e-commerce",
+    "wash-the-world",
+    "react",
+    "nodejs",
+    "vercel"
+  ],
+  "author": "250862-italia",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ]
+} 
