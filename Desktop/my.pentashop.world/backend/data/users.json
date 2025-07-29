@@ -2,7 +2,7 @@
   {
     "id": 1,
     "username": "testuser",
-    "email": "test@example.com",
+    "email": "mario.rossi@example.com",
     "firstName": "Mario",
     "lastName": "Rossi",
     "password": "password",
@@ -61,7 +61,7 @@
     "isActive": true,
     "createdAt": "2025-01-15",
     "lastLogin": "2025-07-28T10:30:00Z",
-    "updatedAt": "2025-07-29T19:07:22.373Z",
+    "updatedAt": "2025-07-29T19:10:29.156Z",
     "hasSeenWelcome": true,
     "subscriptionActive": true,
     "kycStatus": "approved",
@@ -116,7 +116,10 @@
       "hasSeenWelcome": true,
       "subscriptionActive": true,
       "kycStatus": "approved"
-    }
+    },
+    "phone": "+39 123 456 789",
+    "country": "Italia",
+    "city": "Milano"
   },
   {
     "id": 2,

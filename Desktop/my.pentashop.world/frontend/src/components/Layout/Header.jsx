@@ -174,7 +174,7 @@ const Header = ({ user, onLogout }) => {
                       <button
                         onClick={() => {
                           setShowUserMenu(false);
-                          // Navigate to profile or settings
+                          navigate('/profile');
                         }}
                         className="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50 flex items-center space-x-2"
                       >

@@ -601,6 +601,307 @@ app.post('/api/tasks/:taskId/complete', verifyToken, (req, res) => {
   }
 });
 
+// API - Ottieni profilo utente
+app.get('/api/profile', verifyToken, (req, res) => {
+  try {
+    const users = loadUsersFromFile();
+    const user = users.find(u => u.id === req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Utente non trovato'
+      });
+    }
+    
+    const tasks = loadTasksFromFile();
+    const completedTasks = tasks.filter(task => user.completedTasks?.includes(task.id));
+    const availableTasks = tasks.filter(task => 
+      task.isActive && !user.completedTasks?.includes(task.id)
+    );
+    
+    const profileData = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone,
+      country: user.country,
+      city: user.city,
+      role: user.role,
+      level: user.level,
+      points: user.points || 0,
+      tokens: user.tokens || 0,
+      experience: user.experience || 0,
+      experienceToNextLevel: user.experienceToNextLevel || 100,
+      onboardingLevel: user.onboardingLevel || 1,
+      isActive: user.isActive,
+      isOnboardingComplete: user.isOnboardingComplete || false,
+      referralCode: user.referralCode,
+      sponsorCode: user.sponsorCode,
+      sponsorId: user.sponsorId,
+      commissionRate: user.commissionRate || 0.05,
+      totalSales: user.totalSales || 0,
+      totalCommissions: user.totalCommissions || 0,
+      wallet: user.wallet || { balance: 0, transactions: [] },
+      badges: user.badges || [],
+      completedTasks: completedTasks,
+      availableTasks: availableTasks,
+      progress: {
+        percentage: user.completedTasks ? Math.round((user.completedTasks.length / tasks.length) * 100) : 0,
+        completedTasks: user.completedTasks?.length || 0,
+        totalTasks: tasks.length,
+        currentTask: availableTasks[0] || null
+      },
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      lastLogin: user.lastLogin
+    };
+    
+    res.json({
+      success: true,
+      data: profileData
+    });
+  } catch (error) {
+    console.error('❌ Errore caricamento profilo:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
+// API - Aggiorna profilo utente
+app.put('/api/profile', verifyToken, (req, res) => {
+  try {
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      country,
+      city
+    } = req.body;
+    
+    const users = loadUsersFromFile();
+    const userIndex = users.findIndex(u => u.id === req.user.id);
+    
+    if (userIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: 'Utente non trovato'
+      });
+    }
+    
+    const user = users[userIndex];
+    
+    // Aggiorna i campi se forniti
+    if (firstName) user.firstName = firstName;
+    if (lastName) user.lastName = lastName;
+    if (email) user.email = email;
+    if (phone) user.phone = phone;
+    if (country) user.country = country;
+    if (city) user.city = city;
+    
+    user.updatedAt = new Date().toISOString();
+    saveUsersToFile(users);
+    
+    res.json({
+      success: true,
+      data: {
+        message: 'Profilo aggiornato con successo',
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phone: user.phone,
+          country: user.country,
+          city: user.city,
+          role: user.role,
+          level: user.level,
+          points: user.points,
+          tokens: user.tokens,
+          experience: user.experience,
+          referralCode: user.referralCode,
+          commissionRate: user.commissionRate,
+          totalSales: user.totalSales,
+          totalCommissions: user.totalCommissions
+        }
+      }
+    });
+  } catch (error) {
+    console.error('❌ Errore aggiornamento profilo:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
+// API - Ottieni statistiche utente
+app.get('/api/profile/stats', verifyToken, (req, res) => {
+  try {
+    const users = loadUsersFromFile();
+    const user = users.find(u => u.id === req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Utente non trovato'
+      });
+    }
+    
+    const tasks = loadTasksFromFile();
+    const completedTasks = user.completedTasks?.length || 0;
+    const totalTasks = tasks.length;
+    const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    
+    const stats = {
+      totalPoints: user.points || 0,
+      totalTokens: user.tokens || 0,
+      totalExperience: user.experience || 0,
+      completedTasks: completedTasks,
+      totalTasks: totalTasks,
+      progressPercentage: progressPercentage,
+      level: user.level || 1,
+      role: user.role || 'entry_ambassador',
+      isActive: user.isActive || false,
+      totalSales: user.totalSales || 0,
+      totalCommissions: user.totalCommissions || 0,
+      commissionRate: user.commissionRate || 0.05,
+      referralCode: user.referralCode,
+      walletBalance: user.wallet?.balance || 0,
+      badgesCount: user.badges?.length || 0,
+      createdAt: user.createdAt,
+      lastLogin: user.lastLogin
+    };
+    
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('❌ Errore caricamento statistiche:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
+// API - Ottieni wallet utente
+app.get('/api/profile/wallet', verifyToken, (req, res) => {
+  try {
+    const users = loadUsersFromFile();
+    const user = users.find(u => u.id === req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Utente non trovato'
+      });
+    }
+    
+    const walletData = {
+      balance: user.wallet?.balance || 0,
+      transactions: user.wallet?.transactions || [],
+      totalEarnings: user.totalCommissions || 0,
+      pendingAmount: 0, // Calcolato in base alle commissioni pendenti
+      lastTransaction: user.wallet?.transactions?.[user.wallet.transactions.length - 1] || null
+    };
+    
+    res.json({
+      success: true,
+      data: walletData
+    });
+  } catch (error) {
+    console.error('❌ Errore caricamento wallet:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
+// API - Ottieni badge utente
+app.get('/api/profile/badges', verifyToken, (req, res) => {
+  try {
+    const users = loadUsersFromFile();
+    const user = users.find(u => u.id === req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Utente non trovato'
+      });
+    }
+    
+    const availableBadges = [
+      {
+        id: 1,
+        name: 'first_task',
+        title: 'Primo Task',
+        description: 'Completa il tuo primo task',
+        icon: '🎯',
+        unlocked: user.completedTasks?.length > 0
+      },
+      {
+        id: 2,
+        name: 'onboarding_complete',
+        title: 'Onboarding Completo',
+        description: 'Completa tutti i task di onboarding',
+        icon: '🎓',
+        unlocked: user.isOnboardingComplete
+      },
+      {
+        id: 3,
+        name: 'ambassador',
+        title: 'Ambassador',
+        description: 'Diventa un ambassador',
+        icon: '👑',
+        unlocked: user.role === 'ambassador'
+      },
+      {
+        id: 4,
+        name: 'top_performer',
+        title: 'Top Performer',
+        description: 'Raggiungi risultati eccellenti',
+        icon: '🏆',
+        unlocked: user.points >= 100
+      },
+      {
+        id: 5,
+        name: 'sales_master',
+        title: 'Sales Master',
+        description: 'Completa 10 vendite',
+        icon: '💰',
+        unlocked: user.totalSales >= 10
+      }
+    ];
+    
+    const userBadges = user.badges || [];
+    
+    res.json({
+      success: true,
+      data: {
+        userBadges: userBadges,
+        availableBadges: availableBadges,
+        totalBadges: availableBadges.filter(badge => badge.unlocked).length,
+        totalAvailable: availableBadges.length
+      }
+    });
+  } catch (error) {
+    console.error('❌ Errore caricamento badge:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
 // Avvia il server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
