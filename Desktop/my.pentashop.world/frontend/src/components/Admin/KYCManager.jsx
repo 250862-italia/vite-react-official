@@ -10,7 +10,7 @@ const KYCManager = () => {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortBy, setSortBy] = useState('submittedAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -116,9 +116,10 @@ const KYCManager = () => {
 
   // Filtri e ordinamento
   const filteredKYC = kycRequests.filter(kyc => {
-    const matchesSearch = kyc.user?.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         kyc.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         kyc.documentType?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = kyc.userInfo?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         kyc.userInfo?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         kyc.userInfo?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         kyc.kycId?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = filterStatus === 'all' || kyc.status === filterStatus;
     
@@ -129,9 +130,9 @@ const KYCManager = () => {
     let aValue = a[sortBy];
     let bValue = b[sortBy];
     
-    if (sortBy === 'createdAt') {
-      aValue = new Date(a.createdAt);
-      bValue = new Date(b.createdAt);
+    if (sortBy === 'submittedAt') {
+      aValue = new Date(a.submittedAt);
+      bValue = new Date(b.submittedAt);
     }
     
     if (sortOrder === 'asc') {
@@ -299,12 +300,12 @@ const KYCManager = () => {
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
                             <div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-400 to-purple-600 flex items-center justify-center text-white font-bold">
-                              {kyc.user?.username?.charAt(0).toUpperCase() || 'U'}
+                              {kyc.userInfo?.firstName?.charAt(0).toUpperCase() || 'U'}
                             </div>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{kyc.user?.username}</div>
-                            <div className="text-sm text-gray-500">{kyc.user?.email}</div>
+                            <div className="text-sm font-medium text-gray-900">{kyc.userInfo?.firstName} {kyc.userInfo?.lastName}</div>
+                            <div className="text-sm text-gray-500">{kyc.userInfo?.email}</div>
                           </div>
                         </div>
                       </td>
@@ -319,7 +320,7 @@ const KYCManager = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(kyc.createdAt).toLocaleDateString('it-IT')}
+                        {new Date(kyc.submittedAt).toLocaleDateString('it-IT')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">

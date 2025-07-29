@@ -272,7 +272,8 @@
       "balance": 0,
       "transactions": []
     },
-    "referralCode": "PIPA306670-QYZ7-@-I"
+    "referralCode": "PIPA306670-QYZ7-@-I",
+    "kycStatus": "approved"
   },
   {
     "id": 6,

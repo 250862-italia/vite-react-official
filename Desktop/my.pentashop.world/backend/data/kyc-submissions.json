@@ -24,5 +24,57 @@
     "notes": "Richiesta di test per verifica admin",
     "processedAt": "2025-07-29T10:54:08.698Z",
     "processedBy": 2
+  },
+  {
+    "kycId": "kyc_test_002",
+    "userId": 5,
+    "status": "approved",
+    "submittedAt": "2025-07-29T11:00:00Z",
+    "userData": {
+      "birthDate": "1985-05-15",
+      "address": "Via Garibaldi 456",
+      "city": "Milano",
+      "country": "Italia",
+      "citizenship": "Italiana"
+    },
+    "financialData": {
+      "fiscalCode": "PAPPPI85E15F205X",
+      "iban": "IT60X0542811101000000123457",
+      "isCompany": false
+    },
+    "documents": {
+      "idFront": "pippo_front.jpg",
+      "idBack": "pippo_back.jpg",
+      "selfie": "pippo_selfie.jpg"
+    },
+    "notes": "Richiesta KYC per Gianni 62",
+    "processedAt": "2025-07-29T18:59:42.509Z",
+    "processedBy": 2
+  },
+  {
+    "kycId": "kyc_test_003",
+    "userId": 3,
+    "status": "rejected",
+    "submittedAt": "2025-07-29T09:30:00Z",
+    "userData": {
+      "birthDate": "1992-08-20",
+      "address": "Via Verdi 789",
+      "city": "Napoli",
+      "country": "Italia",
+      "citizenship": "Italiana"
+    },
+    "financialData": {
+      "fiscalCode": "VERLUC92M20F839Z",
+      "iban": "IT60X0542811101000000123458",
+      "isCompany": false
+    },
+    "documents": {
+      "idFront": "luca_front.jpg",
+      "idBack": "luca_back.jpg",
+      "selfie": "luca_selfie.jpg"
+    },
+    "notes": "Documenti non conformi - richiesta rifiutata",
+    "processedAt": "2025-07-29T10:00:00Z",
+    "processedBy": 2
   }
 ]
