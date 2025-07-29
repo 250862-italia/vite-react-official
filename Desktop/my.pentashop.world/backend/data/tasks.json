@@ -3,7 +3,7 @@
     "id": 1,
     "title": "🎬 Introduzione a Wash The World",
     "description": "Scopri la missione, i valori e la visione di Wash The World. Impara cosa ci rende diversi e perché i nostri prodotti sono la scelta migliore per l'ambiente.",
-    "type": "video",
+    "type": "survey",
     "level": 1,
     "rewards": {
       "points": 21,
@@ -18,7 +18,7 @@
     },
     "isActive": true,
     "createdAt": "2025-01-15T10:00:00Z",
-    "updatedAt": "2025-07-29T08:07:15.268Z"
+    "updatedAt": "2025-07-29T10:34:32.523Z"
   },
   {
     "id": 2,

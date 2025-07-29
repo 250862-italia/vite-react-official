@@ -1,0 +1,28 @@
+[
+  {
+    "kycId": "kyc_test_001",
+    "userId": 1,
+    "status": "approved",
+    "submittedAt": "2025-07-29T10:30:00Z",
+    "userData": {
+      "birthDate": "1990-01-01",
+      "address": "Via Roma 123",
+      "city": "Roma",
+      "country": "Italia",
+      "citizenship": "Italiana"
+    },
+    "financialData": {
+      "fiscalCode": "RSSMRA80A01H501U",
+      "iban": "IT60X0542811101000000123456",
+      "isCompany": false
+    },
+    "documents": {
+      "idFront": "test_front.jpg",
+      "idBack": "test_back.jpg",
+      "selfie": "test_selfie.jpg"
+    },
+    "notes": "Richiesta di test per verifica admin",
+    "processedAt": "2025-07-29T10:54:08.698Z",
+    "processedBy": 2
+  }
+]

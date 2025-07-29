@@ -32,9 +32,9 @@ const KYCManager = () => {
   const loadKYCRequests = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/api/admin/kyc', { headers: getHeaders() });
+      const response = await axios.get('http://localhost:3000/api/admin/kyc/requests', { headers: getHeaders() });
       if (response.data.success) {
-        setKycRequests(response.data.data);
+        setKycRequests(response.data.data.requests);
       }
     } catch (error) {
       console.error('Errore caricamento KYC:', error);
@@ -46,7 +46,9 @@ const KYCManager = () => {
 
   const handleApproveKYC = async () => {
     try {
-      const response = await axios.put(`http://localhost:3000/api/admin/kyc/${selectedKYC.id}/approve`, {}, { headers: getHeaders() });
+      const response = await axios.post(`http://localhost:3000/api/admin/kyc/${selectedKYC.kycId}/status`, {
+        status: 'approved'
+      }, { headers: getHeaders() });
       if (response.data.success) {
         setShowApproveModal(false);
         setSelectedKYC(null);
@@ -62,7 +64,10 @@ const KYCManager = () => {
 
   const handleRejectKYC = async () => {
     try {
-      const response = await axios.put(`http://localhost:3000/api/admin/kyc/${selectedKYC.id}/reject`, {}, { headers: getHeaders() });
+      const response = await axios.post(`http://localhost:3000/api/admin/kyc/${selectedKYC.kycId}/status`, {
+        status: 'rejected',
+        reason: 'Documenti non conformi'
+      }, { headers: getHeaders() });
       if (response.data.success) {
         setShowRejectModal(false);
         setSelectedKYC(null);
@@ -405,63 +410,134 @@ const KYCManager = () => {
       {/* View KYC Modal */}
       {showViewModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-gray-900 mb-4">👁️ Dettagli KYC</h3>
             {selectedKYC && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Utente</label>
-                    <p className="text-sm text-gray-900">{selectedKYC.user?.username}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <p className="text-sm text-gray-900">{selectedKYC.user?.email}</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Tipo Documento</label>
-                    <p className="text-sm text-gray-900">{selectedKYC.documentType || 'Non specificato'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Stato</label>
-                    <p className="text-sm text-gray-900">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedKYC.status)}`}>
-                        {getStatusLabel(selectedKYC.status)}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Note</label>
-                  <p className="text-sm text-gray-900">{selectedKYC.notes || 'Nessuna nota'}</p>
-                </div>
-                {selectedKYC.documentUrl && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Documento</label>
-                    <a
-                      href={selectedKYC.documentUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-purple-600 hover:text-purple-800 underline"
-                    >
-                      Visualizza documento
-                    </a>
-                  </div>
-                )}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Data Richiesta</label>
-                    <p className="text-sm text-gray-900">{new Date(selectedKYC.createdAt).toLocaleString('it-IT')}</p>
-                  </div>
-                  {selectedKYC.updatedAt && selectedKYC.updatedAt !== selectedKYC.createdAt && (
+              <div className="space-y-6">
+                {/* Informazioni Utente */}
+                <div className="border-b border-gray-200 pb-4">
+                  <h4 className="text-md font-semibold text-gray-800 mb-3">👤 Informazioni Utente</h4>
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Ultima Modifica</label>
-                      <p className="text-sm text-gray-900">{new Date(selectedKYC.updatedAt).toLocaleString('it-IT')}</p>
+                      <label className="block text-sm font-medium text-gray-700">Nome Completo</label>
+                      <p className="text-sm text-gray-900">{selectedKYC.userInfo?.firstName} {selectedKYC.userInfo?.lastName}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Email</label>
+                      <p className="text-sm text-gray-900">{selectedKYC.userInfo?.email}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">KYC ID</label>
+                      <p className="text-sm text-gray-900">{selectedKYC.kycId}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Stato</label>
+                      <p className="text-sm text-gray-900">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedKYC.status)}`}>
+                          {getStatusLabel(selectedKYC.status)}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dati Anagrafici */}
+                <div className="border-b border-gray-200 pb-4">
+                  <h4 className="text-md font-semibold text-gray-800 mb-3">📋 Dati Anagrafici</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Data di Nascita</label>
+                      <p className="text-sm text-gray-900">{selectedKYC.userData?.birthDate}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Cittadinanza</label>
+                      <p className="text-sm text-gray-900">{selectedKYC.userData?.citizenship}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-sm font-medium text-gray-700">Indirizzo</label>
+                      <p className="text-sm text-gray-900">{selectedKYC.userData?.address}, {selectedKYC.userData?.city}, {selectedKYC.userData?.country}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dati Fiscali e Bancari */}
+                <div className="border-b border-gray-200 pb-4">
+                  <h4 className="text-md font-semibold text-gray-800 mb-3">💳 Dati Fiscali e Bancari</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Tipo Soggetto</label>
+                      <p className="text-sm text-gray-900">{selectedKYC.financialData?.isCompany ? 'Azienda' : 'Privato'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">IBAN</label>
+                      <p className="text-sm text-gray-900">{selectedKYC.financialData?.iban}</p>
+                    </div>
+                    {!selectedKYC.financialData?.isCompany && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Codice Fiscale</label>
+                        <p className="text-sm text-gray-900">{selectedKYC.financialData?.fiscalCode}</p>
+                      </div>
+                    )}
+                    {selectedKYC.financialData?.isCompany && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Nome Azienda</label>
+                          <p className="text-sm text-gray-900">{selectedKYC.financialData?.companyName}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Partita IVA</label>
+                          <p className="text-sm text-gray-900">{selectedKYC.financialData?.vatNumber}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Codice SDI</label>
+                          <p className="text-sm text-gray-900">{selectedKYC.financialData?.sdiCode}</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Documenti */}
+                <div className="border-b border-gray-200 pb-4">
+                  <h4 className="text-md font-semibold text-gray-800 mb-3">📄 Documenti Caricati</h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Fronte Documento</label>
+                      <p className="text-sm text-gray-900">{selectedKYC.documents?.idFront}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Retro Documento</label>
+                      <p className="text-sm text-gray-900">{selectedKYC.documents?.idBack}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Selfie</label>
+                      <p className="text-sm text-gray-900">{selectedKYC.documents?.selfie}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Note e Date */}
+                <div className="space-y-4">
+                  {selectedKYC.notes && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Note</label>
+                      <p className="text-sm text-gray-900">{selectedKYC.notes}</p>
                     </div>
                   )}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Data Richiesta</label>
+                      <p className="text-sm text-gray-900">{new Date(selectedKYC.submittedAt).toLocaleString('it-IT')}</p>
+                    </div>
+                    {selectedKYC.processedAt && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Data Processamento</label>
+                        <p className="text-sm text-gray-900">{new Date(selectedKYC.processedAt).toLocaleString('it-IT')}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
                 <div className="pt-4">
                   <button
                     onClick={() => setShowViewModal(false)}

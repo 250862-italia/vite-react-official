@@ -5,6 +5,7 @@ import Header from '../components/Layout/Header';
 import TaskManager from '../components/Admin/TaskManager';
 import UserManager from '../components/Admin/UserManager';
 import CommissionPlansManager from '../components/Admin/CommissionPlansManager';
+import CommissionManager from '../components/Admin/CommissionManager';
 import KYCManager from '../components/Admin/KYCManager';
 import SalesManager from '../components/Admin/SalesManager';
 
@@ -97,7 +98,8 @@ function AdminDashboard() {
     { id: 'overview', label: '📊 Panoramica', icon: '📊' },
     { id: 'users', label: '👥 Utenti', icon: '👥' },
     { id: 'tasks', label: '📋 Task', icon: '📋' },
-    { id: 'commission-plans', label: '💰 Commissioni', icon: '💰' },
+    { id: 'commission-plans', label: '💰 Piani Commissioni', icon: '💰' },
+    { id: 'commissions', label: '💸 Commissioni Generate', icon: '💸' },
     { id: 'sales', label: '🛍️ Vendite', icon: '🛍️' },
     { id: 'kyc', label: '🔐 KYC', icon: '🔐' },
     { id: 'analytics', label: '📈 Analytics', icon: '📈' }
@@ -294,6 +296,12 @@ function AdminDashboard() {
               {activeTab === 'commission-plans' && (
                 <div className="bg-white rounded-2xl shadow-sm border">
                   <CommissionPlansManager />
+                </div>
+              )}
+
+              {activeTab === 'commissions' && (
+                <div className="bg-white rounded-2xl shadow-sm border">
+                  <CommissionManager />
                 </div>
               )}
 

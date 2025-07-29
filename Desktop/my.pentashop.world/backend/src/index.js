@@ -137,22 +137,41 @@ function verifyToken(req, res, next) {
     // Per ora usiamo una verifica semplice del token
     // In produzione dovremmo verificare il JWT con jwt.verify()
     if (token.startsWith('test-jwt-token-')) {
-      // Estrai timestamp dal token per identificare l'utente
-      const timestamp = token.replace('test-jwt-token-', '');
-      console.log('🔍 Token timestamp:', timestamp);
+      // Estrai ID utente e timestamp dal token
+      const tokenParts = token.replace('test-jwt-token-', '').split('-');
+      let userId = null;
+      let timestamp = null;
+      
+      // Gestisce sia il formato nuovo (ID-timestamp) che vecchio (solo timestamp)
+      if (tokenParts.length >= 2) {
+        userId = parseInt(tokenParts[0]);
+        timestamp = tokenParts[1];
+        console.log('🔍 Token userId:', userId, 'timestamp:', timestamp);
+      } else {
+        // Formato vecchio: solo timestamp
+        timestamp = tokenParts[0];
+        console.log('🔍 Token formato vecchio, timestamp:', timestamp);
+      }
       
       // Carica gli utenti per determinare il ruolo
       const users = usersCRUD.readAll();
       
-      // Mappa il token all'utente corretto
-      // Per il dashboard ambassador, preferiamo l'ambassador
-      let user = users.find(u => u.role === 'entry_ambassador') || 
-                 users.find(u => u.role === 'ambassador') || 
-                 users.find(u => u.role === 'mlm_ambassador');
+      // Trova l'utente specifico dal token (se disponibile)
+      let user = null;
+      if (userId) {
+        user = users.find(u => u.id === userId);
+      }
       
-      // Se non trova ambassador, usa admin come fallback
+      // Se non trova l'utente specifico, usa fallback
       if (!user) {
-        user = users.find(u => u.username === 'admin');
+        user = users.find(u => u.role === 'entry_ambassador') || 
+               users.find(u => u.role === 'ambassador') || 
+               users.find(u => u.role === 'mlm_ambassador');
+        
+        // Se non trova ambassador, usa admin come fallback
+        if (!user) {
+          user = users.find(u => u.username === 'admin');
+        }
       }
       
       if (user) {
@@ -274,8 +293,16 @@ function generateUniqueReferralCode(user) {
 // Funzione per salvare gli utenti usando il sistema CRUD
 function saveUsersToFile(usersToSave) {
   try {
-    // Per ora manteniamo la compatibilità con il sistema esistente
-    // In futuro potremmo implementare un metodo batch update
+    const usersPath = path.join(__dirname, '..', 'data', 'users.json');
+    
+    // Crea la directory se non esiste
+    const dataDir = path.dirname(usersPath);
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    
+    // Salva gli utenti su file
+    fs.writeFileSync(usersPath, JSON.stringify(usersToSave, null, 2));
     console.log('✅ Utenti salvati su file:', usersToSave.length);
   } catch (error) {
     console.error('❌ Errore salvataggio utenti:', error);
@@ -867,7 +894,7 @@ function saveSalesToFile(salesToSave) {
 }
 
 // Load users from file on startup
-loadUsersFromFile();
+users = loadUsersFromFile();
 
 // Load commission plans from file on startup
 let commissionPlans = loadCommissionPlansFromFile();
@@ -875,154 +902,73 @@ let commissionPlans = loadCommissionPlansFromFile();
 // Load tasks from file on startup
 tasks = loadTasksFromFile();
 
-// STRUTTURA RETE MLM - RELAZIONI REFERRAL
-const networkStructure = [
-  {
-    id: 1,
-    userId: 1,
-    sponsorId: null, // Top level
-    upline: [],
-    downline: [2, 3],
-    level: 0,
-    plan: 'ambassador',
-    joinDate: '2025-01-15'
-  },
-  {
-    id: 2,
-    userId: 2,
-    sponsorId: 1,
-    upline: [1],
-    downline: [4, 5],
-    level: 1,
-    plan: 'pentagame',
-    joinDate: '2025-02-01'
-  },
-  {
-    id: 3,
-    userId: 3,
-    sponsorId: 1,
-    upline: [1],
-    downline: [6, 7],
-    level: 1,
-    plan: 'ambassador',
-    joinDate: '2025-02-20'
-  },
-  {
-    id: 4,
-    userId: 4,
-    sponsorId: 2,
-    upline: [1, 2],
-    downline: [],
-    level: 2,
-    plan: 'ambassador',
-    joinDate: '2025-03-10'
-  },
-  {
-    id: 5,
-    userId: 5,
-    sponsorId: 2,
-    upline: [1, 2],
-    downline: [],
-    level: 2,
-    plan: 'pentagame',
-    joinDate: '2025-03-15'
-  }
-];
+// STRUTTURA RETE MLM - RELAZIONI REFERRAL (DINAMICA)
+// I dati della rete vengono calcolati dinamicamente basati sui dati reali degli utenti
+// invece di usare dati MOCK hardcoded
 
-// VENDITE E COMMISSIONI DETTAGLIATE
-const sales = [
-  {
-    id: 1,
-    userId: 1,
-    amount: 500,
-    date: '2025-07-28',
-    type: 'direct_sale',
-    product: 'Kit Eco-Friendly',
-    commissionEarned: 100, // 20% Ambassador
-    status: 'completed'
-  },
-  {
-    id: 2,
-    userId: 2,
-    amount: 800,
-    date: '2025-07-28',
-    type: 'direct_sale',
-    product: 'Set Prodotti Sostenibili',
-    commissionEarned: 252, // 31,5% Pentagame
-    status: 'completed'
-  },
-  {
-    id: 3,
-    userId: 3,
-    amount: 300,
-    date: '2025-07-27',
-    type: 'direct_sale',
-    product: 'Detergente Naturale',
-    commissionEarned: 60, // 20% Ambassador
-    status: 'completed'
-  },
-  {
-    id: 4,
-    userId: 4,
-    amount: 200,
-    date: '2025-07-26',
-    type: 'direct_sale',
-    product: 'Spray Eco',
-    commissionEarned: 40, // 20% Ambassador
-    status: 'completed'
-  },
-  {
-    id: 5,
-    userId: 5,
-    amount: 600,
-    date: '2025-07-25',
-    type: 'direct_sale',
-    product: 'Kit Completo',
-    commissionEarned: 189, // 31,5% Pentagame
-    status: 'completed'
-  }
-];
+// Funzione per calcolare la struttura della rete MLM dinamicamente
+function calculateNetworkStructure() {
+  const users = loadUsersFromFile();
+  const networkStructure = [];
+  
+  users.forEach(user => {
+    if (user.role === 'ambassador' || user.role === 'mlm_ambassador' || user.role === 'entry_ambassador') {
+      // Trova sponsor (referrerId)
+      const sponsorId = user.sponsorId || null;
+      
+      // Trova downline (utenti che hanno questo utente come sponsor)
+      const downline = users.filter(u => u.sponsorId === user.id).map(u => u.id);
+      
+      // Calcola livello (quanti livelli sopra)
+      let level = 0;
+      let upline = [];
+      let currentSponsorId = sponsorId;
+      
+      while (currentSponsorId) {
+        level++;
+        upline.push(currentSponsorId);
+        const sponsor = users.find(u => u.id === currentSponsorId);
+        currentSponsorId = sponsor?.sponsorId || null;
+      }
+      
+      networkStructure.push({
+        id: user.id,
+        userId: user.id,
+        sponsorId: sponsorId,
+        upline: upline,
+        downline: downline,
+        level: level,
+        plan: user.role === 'mlm_ambassador' ? 'pentagame' : 'ambassador',
+        joinDate: user.createdAt || new Date().toISOString()
+      });
+    }
+  });
+  
+  return networkStructure;
+}
 
-const referrals = [
-  {
-    id: 1,
-    referrerId: 3,
-    referredEmail: 'nuovo@example.com',
-    referredName: 'Nuovo Utente',
-    status: 'pending',
-    date: '2025-07-26',
-    commissionEarned: 0
-  },
-  {
-    id: 2,
-    referrerId: 1,
-    referredEmail: 'altro@example.com',
-    referredName: 'Altro Utente',
-    status: 'active',
-    date: '2025-07-25',
-    commissionEarned: 15
-  }
-];
+// VENDITE E COMMISSIONI DETTAGLIATE (DINAMICHE)
+// I dati delle vendite vengono caricati dinamicamente dal file JSON
+// invece di usare dati MOCK hardcoded
 
-// BADGES
-const badges = [
-  {
-    id: 1,
-    name: 'Primo Passo',
-    description: 'Completa il primo task',
-    icon: '🎯',
-    category: 'onboarding',
-    level: 1
-  },
-  {
-    id: 2,
-    name: 'Studente Diligente',
-    description: 'Guarda 3 video',
-    icon: '📚',
-    category: 'onboarding',
-    level: 1
+// Carica vendite dal file JSON
+let sales = loadSalesFromFile();
+
+// Carica referrals dal file JSON (se esiste)
+let referrals = [];
+try {
+  const referralsPath = path.join(__dirname, '..', 'data', 'referrals.json');
+  if (fs.existsSync(referralsPath)) {
+    const referralsData = fs.readFileSync(referralsPath, 'utf8');
+    referrals = JSON.parse(referralsData);
   }
-];
+} catch (error) {
+  console.log('📝 Nessun file referrals.json trovato, usando array vuoto');
+}
+
+// BADGES (DINAMICI)
+// I badge vengono calcolati dinamicamente basati sui progressi dell'utente
+// invece di usare dati MOCK hardcoded
 
 // Health check
 app.get('/health', (req, res) => {
@@ -1084,7 +1030,7 @@ app.post('/api/auth/login', (req, res) => {
       message: 'Login effettuato con successo',
       data: {
         user: userResponse,
-        token: 'test-jwt-token-' + Date.now()
+        token: 'test-jwt-token-' + user.id + '-' + Date.now()
       }
     });
   } else {
@@ -1189,6 +1135,9 @@ app.post('/api/auth/register', (req, res) => {
     });
   }
 
+  // Carica gli utenti dal sistema CRUD
+  const users = usersCRUD.readAll();
+  
   // Verifica username univoco
   const existingUser = users.find(u => u.username === username);
   if (existingUser) {
@@ -1224,7 +1173,6 @@ app.post('/api/auth/register', (req, res) => {
 
   // Crea nuovo Ambassador
   const newAmbassador = {
-    id: users.length + 1,
     username,
     password,
     email,
@@ -1249,32 +1197,36 @@ app.post('/api/auth/register', (req, res) => {
     updatedAt: new Date().toISOString().split('T')[0]
   };
 
-  // Aggiungi alla lista utenti
-  users.push(newAmbassador);
+  // Usa il sistema CRUD per creare l'utente
+  const result = usersCRUD.create(newAmbassador);
+  
+  if (!result.success) {
+    return res.status(500).json({
+      success: false,
+      error: result.error
+    });
+  }
 
-  // Salva utenti su file
-  saveUsersToFile(users);
-
-  console.log('✅ Ambassador registrato con successo:', newAmbassador.username);
+  console.log('✅ Ambassador registrato con successo:', result.data.username);
 
   // Prepara risposta utente (senza password)
   const userResponse = {
-    id: newAmbassador.id,
-    username: newAmbassador.username,
-    email: newAmbassador.email,
-    firstName: newAmbassador.firstName,
-    lastName: newAmbassador.lastName,
-    phone: newAmbassador.phone,
-    country: newAmbassador.country,
-    city: newAmbassador.city,
-    sponsorCode: newAmbassador.sponsorCode,
-    sponsorId: newAmbassador.sponsorId,
-    level: newAmbassador.level,
-    points: newAmbassador.points,
-    tokens: newAmbassador.tokens,
-    onboardingLevel: newAmbassador.onboardingLevel,
-    role: newAmbassador.role,
-    isActive: newAmbassador.isActive
+    id: result.data.id,
+    username: result.data.username,
+    email: result.data.email,
+    firstName: result.data.firstName,
+    lastName: result.data.lastName,
+    phone: result.data.phone,
+    country: result.data.country,
+    city: result.data.city,
+    sponsorCode: result.data.sponsorCode,
+    sponsorId: result.data.sponsorId,
+    level: result.data.level,
+    points: result.data.points,
+    tokens: result.data.tokens,
+    onboardingLevel: result.data.onboardingLevel,
+    role: result.data.role,
+    isActive: result.data.isActive
   };
 
   res.status(201).json({
@@ -1282,7 +1234,7 @@ app.post('/api/auth/register', (req, res) => {
     message: 'Ambassador registrato con successo! Benvenuto in Wash The World!',
     data: {
       user: userResponse,
-      token: 'test-jwt-token-' + Date.now()
+      token: 'test-jwt-token-' + result.data.id + '-' + Date.now()
     }
   });
 });
@@ -1555,6 +1507,72 @@ app.delete('/api/admin/users/:id', verifyToken, (req, res) => {
   }
 });
 
+// PUT - Autorizza utente
+app.put('/api/admin/users/:id/authorize', verifyToken, (req, res) => {
+  console.log(`✅ Admin: Autorizzazione utente ID ${req.params.id}`);
+  
+  const userId = parseInt(req.params.id);
+  const users = usersCRUD.readAll();
+  const userIndex = users.findIndex(u => u.id === userId);
+  
+  if (userIndex === -1) {
+    return res.status(404).json({
+      success: false,
+      error: 'Utente non trovato'
+    });
+  }
+  
+  // Aggiorna lo stato dell'utente
+  users[userIndex].isActive = true;
+  users[userIndex].updatedAt = new Date().toISOString();
+  
+  // Salva le modifiche
+  saveUsersToFile(users);
+  
+  res.json({
+    success: true,
+    message: 'Utente autorizzato con successo',
+    data: users[userIndex]
+  });
+});
+
+// PUT - Sospendi utente
+app.put('/api/admin/users/:id/suspend', verifyToken, (req, res) => {
+  console.log(`⏸️ Admin: Sospensione utente ID ${req.params.id}`);
+  
+  const userId = parseInt(req.params.id);
+  const users = usersCRUD.readAll();
+  const userIndex = users.findIndex(u => u.id === userId);
+  
+  if (userIndex === -1) {
+    return res.status(404).json({
+      success: false,
+      error: 'Utente non trovato'
+    });
+  }
+  
+  // Non permettere di sospendere l'admin
+  if (users[userIndex].role === 'admin') {
+    return res.status(400).json({
+      success: false,
+      error: 'Non è possibile sospendere un utente admin'
+    });
+  }
+  
+  // Aggiorna lo stato dell'utente
+  users[userIndex].isActive = false;
+  users[userIndex].updatedAt = new Date().toISOString();
+  
+  // Salva le modifiche
+  saveUsersToFile(users);
+  
+  res.json({
+    success: true,
+    message: 'Utente sospeso con successo',
+    data: users[userIndex]
+  });
+});
+
 // API ONBOARDING - SOLO PER AMBASSADOR
 app.get('/api/onboarding/dashboard', verifyToken, (req, res) => {
   console.log('📊 Dashboard request');
@@ -1660,7 +1678,7 @@ app.get('/api/onboarding/dashboard', verifyToken, (req, res) => {
       totalTasks: tasks.length,
       currentTask: null
     },
-    availableTasks: tasks, // MOSTRA TUTTI I TASK
+    availableTasks: availableTasksList, // MOSTRA SOLO I TASK DISPONIBILI
     completedTasks: completedTasksList,
     badges: user.badges || [],
     availableBadges: availableBadges,
@@ -2741,253 +2759,17 @@ app.post('/api/admin/restore-admin', verifyToken, (req, res) => {
 // API ADMIN - Dashboard (RIMOSSO - Admin non deve fare l'ambassador)
 // L'admin ora usa solo /api/admin/stats per statistiche pure
 
-// API ADMIN - Lista Utenti
-app.get('/api/admin/users', (req, res) => {
-  console.log('👑 Admin users list request');
-  
-  const userList = users.map(u => ({
-    id: u.id,
-    username: u.username,
-    email: u.email,
-    firstName: u.firstName,
-    lastName: u.lastName,
-    role: u.role,
-    level: u.level,
-    points: u.points,
-    tokens: u.tokens,
-    totalSales: u.totalSales,
-    totalCommissions: u.totalCommissions,
-    isActive: u.isActive,
-    createdAt: u.createdAt,
-    lastLogin: u.lastLogin
-  }));
+// API ADMIN - Lista Utenti (DUPLICATO RIMOSSO - Usa l'endpoint corretto sopra)
 
-  res.json({
-    success: true,
-    data: userList
-  });
-});
+// API ADMIN - Dettagli Utente (DUPLICATO RIMOSSO - Usa l'endpoint corretto sopra)
 
-// API ADMIN - Dettagli Utente
-app.get('/api/admin/users/:id', (req, res) => {
-  const userId = parseInt(req.params.id);
-  const user = users.find(u => u.id === userId);
+// API ADMIN - Aggiorna Utente (DUPLICATO RIMOSSO - Usa l'endpoint corretto sopra)
 
-  if (!user) {
-    return res.status(404).json({
-      success: false,
-      error: 'Utente non trovato'
-    });
-  }
+// API ADMIN - Crea Nuovo Utente (DUPLICATO RIMOSSO - Usa l'endpoint corretto sopra)
 
-  res.json({
-    success: true,
-    data: {
-      ...user,
-      password: undefined // Non inviare la password
-    }
-  });
-});
+// API ADMIN - Elimina Utente (DUPLICATO RIMOSSO - Usa l'endpoint corretto sopra)
 
-// API ADMIN - Aggiorna Utente
-app.put('/api/admin/users/:id', verifyToken, (req, res) => {
-  const userId = parseInt(req.params.id);
-  const userIndex = users.findIndex(u => u.id === userId);
-
-  if (userIndex === -1) {
-    return res.status(404).json({
-      success: false,
-      error: 'Utente non trovato'
-    });
-  }
-
-  const { firstName, lastName, email, role, isActive, level, points, tokens, experience } = req.body;
-  
-  users[userIndex] = {
-    ...users[userIndex],
-    firstName: firstName || users[userIndex].firstName,
-    lastName: lastName || users[userIndex].lastName,
-    email: email || users[userIndex].email,
-    role: role || users[userIndex].role,
-    isActive: isActive !== undefined ? isActive : users[userIndex].isActive,
-    level: level || users[userIndex].level,
-    points: points || users[userIndex].points,
-    tokens: tokens || users[userIndex].tokens,
-    experience: experience || users[userIndex].experience,
-    updatedAt: new Date().toISOString()
-  };
-
-  // Salva su file
-  saveUsersToFile(users);
-
-  res.json({
-    success: true,
-    message: 'Utente aggiornato con successo',
-    data: {
-      ...users[userIndex],
-      password: undefined
-    }
-  });
-});
-
-// API ADMIN - Crea Nuovo Utente
-app.post('/api/admin/users', verifyToken, (req, res) => {
-  console.log('👑 Admin create user request');
-  
-  const { 
-    username, 
-    email, 
-    firstName, 
-    lastName, 
-    password, 
-    role, 
-    level, 
-    points, 
-    tokens, 
-    experience, 
-    isActive,
-    commissionRate,
-    referralCode
-  } = req.body;
-  
-  // Validazione campi obbligatori
-  if (!username || !email || !firstName || !lastName || !password) {
-    return res.status(400).json({
-      success: false,
-      error: 'Campi obbligatori mancanti'
-    });
-  }
-  
-  // Controllo se username o email già esistono
-  const existingUser = users.find(u => u.username === username || u.email === email);
-  if (existingUser) {
-    return res.status(409).json({
-      success: false,
-      error: 'Username o email già esistenti'
-    });
-  }
-  
-  // Genera nuovo ID
-  const newId = Math.max(...users.map(u => u.id), 0) + 1;
-  
-  // Genera referral code se non fornito
-  const finalReferralCode = referralCode || generateUniqueReferralCode({ firstName, lastName });
-  
-  // Crea nuovo utente
-  const newUser = {
-    id: newId,
-    username,
-    email,
-    firstName,
-    lastName,
-    password, // In produzione dovrebbe essere hashata
-    role: role || 'entry_ambassador',
-    level: level || 1,
-    points: points || 0,
-    tokens: tokens || 0,
-    experience: experience || 0,
-    isActive: isActive !== undefined ? isActive : true,
-    commissionRate: commissionRate || 0.1,
-    referralCode: finalReferralCode,
-    totalSales: 0,
-    totalCommissions: 0,
-    completedTasks: [],
-    badges: [],
-    wallet: {
-      balance: 0,
-      transactions: []
-    },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-  
-  // Aggiungi utente alla lista
-  users.push(newUser);
-  
-  // Salva su file
-  saveUsersToFile(users);
-  
-  console.log('✅ Nuovo utente creato:', { ...newUser, password: '***' });
-  
-  res.status(201).json({
-    success: true,
-    message: 'Utente creato con successo',
-    data: {
-      ...newUser,
-      password: undefined
-    }
-  });
-});
-
-// API ADMIN - Elimina Utente
-app.delete('/api/admin/users/:id', verifyToken, (req, res) => {
-  const userId = parseInt(req.params.id);
-  const userIndex = users.findIndex(u => u.id === userId);
-
-  if (userIndex === -1) {
-    return res.status(404).json({
-      success: false,
-      error: 'Utente non trovato'
-    });
-  }
-
-  const deletedUser = users.splice(userIndex, 1)[0];
-  
-  // Salva su file
-  saveUsersToFile(users);
-
-  res.json({
-    success: true,
-    message: 'Utente eliminato con successo',
-    data: {
-      ...deletedUser,
-      password: undefined
-    }
-  });
-});
-
-// API ADMIN - Statistiche Dettagliate
-app.get('/api/admin/analytics', (req, res) => {
-  console.log('👑 Admin analytics request');
-  
-  const analytics = {
-    userGrowth: {
-      total: users.length,
-      thisMonth: users.filter(u => {
-        const createdAt = new Date(u.createdAt);
-        const now = new Date();
-        return createdAt.getMonth() === now.getMonth() && 
-               createdAt.getFullYear() === now.getFullYear();
-      }).length
-    },
-    revenue: {
-      total: users.reduce((sum, u) => sum + u.totalSales, 0),
-      commissions: users.reduce((sum, u) => sum + u.totalCommissions, 0),
-      averagePerUser: users.reduce((sum, u) => sum + u.totalSales, 0) / users.length
-    },
-    performance: {
-      topSales: users
-        .filter(u => u.role !== 'admin')
-        .sort((a, b) => b.totalSales - a.totalSales)
-        .slice(0, 10),
-      topCommissions: users
-        .filter(u => u.role !== 'admin')
-        .sort((a, b) => b.totalCommissions - a.totalCommissions)
-        .slice(0, 10)
-    },
-    engagement: {
-      activeUsers: users.filter(u => u.isActive).length,
-      completedTasks: users.reduce((sum, u) => sum + u.completedTasks.length, 0),
-      totalPoints: users.reduce((sum, u) => sum + u.points, 0),
-      totalTokens: users.reduce((sum, u) => sum + u.tokens, 0)
-    }
-  };
-
-  res.json({
-    success: true,
-    data: analytics
-  });
-});
+// API ADMIN - Statistiche Dettagliate (DUPLICATO RIMOSSO - Usa l'endpoint corretto sopra)
 
 // API REFERRAL SYSTEM
 app.get('/api/referral/code/:userId', (req, res) => {
@@ -3623,73 +3405,101 @@ app.post('/api/mlm/sales', (req, res) => {
 // ===== API ADMIN MLM =====
 
 // API ADMIN - Tutte le Commissioni
-app.get('/api/admin/commissions', (req, res) => {
-  console.log('👑 Admin commissions request');
-  
-  const allCommissions = commissions.map(commission => {
-    const user = users.find(u => u.id === commission.userId);
-    return {
-      ...commission,
-      userName: user ? `${user.firstName} ${user.lastName}` : 'Utente Sconosciuto',
-      userEmail: user ? user.email : 'N/A'
+app.get('/api/admin/commissions', verifyToken, (req, res) => {
+  try {
+    console.log('👑 Admin commissions request');
+    
+    // Carica commissioni dal file
+    const commissions = loadCommissionsFromFile();
+    const users = loadUsersFromFile();
+    
+    const allCommissions = commissions.map(commission => {
+      const user = users.find(u => u.id === commission.userId);
+      return {
+        ...commission,
+        userName: user ? `${user.firstName} ${user.lastName}` : 'Utente Sconosciuto',
+        userEmail: user ? user.email : 'N/A'
+      };
+    });
+    
+    const stats = {
+      totalCommissions: allCommissions.reduce((sum, c) => sum + c.commissionAmount, 0),
+      pendingCommissions: allCommissions
+        .filter(c => c.status === 'pending')
+        .reduce((sum, c) => sum + c.commissionAmount, 0),
+      paidCommissions: allCommissions
+        .filter(c => c.status === 'paid')
+        .reduce((sum, c) => sum + c.commissionAmount, 0),
+      thisMonth: allCommissions
+        .filter(c => {
+          const commissionDate = new Date(c.date);
+          const now = new Date();
+          return commissionDate.getMonth() === now.getMonth() && 
+                 commissionDate.getFullYear() === now.getFullYear();
+        })
+        .reduce((sum, c) => sum + c.commissionAmount, 0),
+      totalSales: allCommissions.reduce((sum, c) => sum + c.amount, 0),
+      totalOrders: allCommissions.length,
+      averageCommission: allCommissions.length > 0 ? 
+        allCommissions.reduce((sum, c) => sum + c.commissionAmount, 0) / allCommissions.length : 0
     };
-  });
-  
-  const stats = {
-    totalCommissions: allCommissions.reduce((sum, c) => sum + c.commissionAmount, 0),
-    pendingCommissions: allCommissions
-      .filter(c => c.status === 'pending')
-      .reduce((sum, c) => sum + c.commissionAmount, 0),
-    paidCommissions: allCommissions
-      .filter(c => c.status === 'paid')
-      .reduce((sum, c) => sum + c.commissionAmount, 0),
-    thisMonth: allCommissions
-      .filter(c => {
-        const commissionDate = new Date(c.date);
-        const now = new Date();
-        return commissionDate.getMonth() === now.getMonth() && 
-               commissionDate.getFullYear() === now.getFullYear();
-      })
-      .reduce((sum, c) => sum + c.commissionAmount, 0)
-  };
 
-  res.json({
-    success: true,
-    data: {
-      stats,
-      commissions: allCommissions
-    }
-  });
+    res.json({
+      success: true,
+      data: {
+        stats,
+        commissions: allCommissions
+      }
+    });
+  } catch (error) {
+    console.error('❌ Errore server:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
 });
 
 // API ADMIN - Tutte le Vendite
-app.get('/api/admin/sales', (req, res) => {
-  console.log('👑 Admin sales request');
-  
-  const allSales = sales.map(sale => {
-    const user = users.find(u => u.id === sale.userId);
-    return {
-      ...sale,
-      userName: user ? `${user.firstName} ${user.lastName}` : 'Utente Sconosciuto',
-      userEmail: user ? user.email : 'N/A'
+app.get('/api/admin/sales', verifyToken, (req, res) => {
+  try {
+    console.log('👑 Admin sales request');
+    
+    // Carica vendite dal file
+    const sales = loadSalesFromFile();
+    const users = loadUsersFromFile();
+    
+    const allSales = sales.map(sale => {
+      const user = users.find(u => u.id === sale.userId);
+      return {
+        ...sale,
+        userName: user ? `${user.firstName} ${user.lastName}` : 'Utente Sconosciuto',
+        userEmail: user ? user.email : 'N/A'
+      };
+    });
+    
+    const stats = {
+      totalSales: allSales.reduce((sum, s) => sum + s.amount, 0),
+      totalCommissions: allSales.reduce((sum, s) => sum + s.commissionEarned, 0),
+      totalOrders: allSales.length,
+      averageOrderValue: allSales.length > 0 ? 
+        allSales.reduce((sum, s) => sum + s.amount, 0) / allSales.length : 0
     };
-  });
-  
-  const stats = {
-    totalSales: allSales.reduce((sum, s) => sum + s.amount, 0),
-    totalCommissions: allSales.reduce((sum, s) => sum + s.commissionEarned, 0),
-    totalOrders: allSales.length,
-    averageOrderValue: allSales.length > 0 ? 
-      allSales.reduce((sum, s) => sum + s.amount, 0) / allSales.length : 0
-  };
 
-  res.json({
-    success: true,
-    data: {
-      stats,
-      sales: allSales
-    }
-  });
+    res.json({
+      success: true,
+      data: {
+        stats,
+        sales: allSales
+      }
+    });
+  } catch (error) {
+    console.error('❌ Errore server:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
 });
 
 // POST - Crea nuova vendita
@@ -4212,6 +4022,7 @@ app.delete('/api/admin/commission-plans/:id', verifyToken, (req, res) => {
   }
   
   // Verifica se il piano è in uso
+  const networkStructure = calculateNetworkStructure();
   const planInUse = networkStructure.some(n => n.plan === commissionPlans[planIndex].code);
   if (planInUse) {
     return res.status(400).json({
@@ -4832,6 +4643,51 @@ app.use((error, req, res, next) => {
   });
 });
 
+// Funzioni helper per le commissioni MLM
+function getUserName(userId, users) {
+  const user = users.find(u => u.id === userId);
+  return user ? `${user.firstName} ${user.lastName}` : 'Utente Sconosciuto';
+}
+
+function getUserEmail(userId, users) {
+  const user = users.find(u => u.id === userId);
+  return user ? user.email : 'N/A';
+}
+
+// API ADMIN - Calcola Commissioni MLM Complete
+app.get('/api/admin/mlm-commissions', verifyToken, (req, res) => {
+  try {
+    console.log('👑 Admin MLM commissions calculation request');
+    
+    const users = loadUsersFromFile();
+    const sales = loadSalesFromFile();
+    const commissions = loadCommissionsFromFile();
+    
+    // Per ora restituiamo solo le commissioni esistenti
+    res.json({
+      success: true,
+      data: {
+        stats: {
+          totalCommissions: commissions.reduce((sum, c) => sum + c.commissionAmount, 0),
+          pendingCommissions: commissions.filter(c => c.status === 'pending').reduce((sum, c) => sum + c.commissionAmount, 0),
+          paidCommissions: commissions.filter(c => c.status === 'paid').reduce((sum, c) => sum + c.commissionAmount, 0),
+          totalUsers: users.length,
+          totalSales: sales.length
+        },
+        commissionsByUser: [],
+        commissionsByLevel: {},
+        allCommissions: commissions
+      }
+    });
+  } catch (error) {
+    console.error('❌ Errore server:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
 // Avvio server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
@@ -4859,10 +4715,13 @@ process.on('SIGINT', () => {
 // ===== API SISTEMA COMMISSIONI MLM COMPLETO =====
 
 // Funzione per calcolare commissioni multi-livello
-const calculateMLMCommissions = (sale, networkStructure, mlmPlans) => {
+const calculateMLMCommissions = (sale, mlmPlans) => {
   const commissions = [];
   const saleAmount = sale.amount;
   const sellerId = sale.userId;
+  
+  // Calcola struttura rete dinamicamente
+  const networkStructure = calculateNetworkStructure();
   
   // Trova il venditore nella struttura rete
   const seller = networkStructure.find(n => n.userId === sellerId);
@@ -4944,6 +4803,7 @@ app.get('/api/mlm/commissions-advanced', (req, res) => {
   }
   
   // Trova il piano dell'utente
+  const networkStructure = calculateNetworkStructure();
   const userNetwork = networkStructure.find(n => n.userId === user.id);
   const userPlan = userNetwork ? mlmPlans[userNetwork.plan] : mlmPlans.ambassador;
   
@@ -4954,7 +4814,7 @@ app.get('/api/mlm/commissions-advanced', (req, res) => {
   // Calcola commissioni multi-livello
   const allMLMCommissions = [];
   sales.forEach(sale => {
-    const saleCommissions = calculateMLMCommissions(sale, networkStructure, mlmPlans);
+    const saleCommissions = calculateMLMCommissions(sale, mlmPlans);
     allMLMCommissions.push(...saleCommissions);
   });
   
@@ -5080,7 +4940,7 @@ app.post('/api/mlm/calculate-commission', (req, res) => {
   };
   
   // Calcola commissioni
-  const calculatedCommissions = calculateMLMCommissions(sale, networkStructure, mlmPlans);
+  const calculatedCommissions = calculateMLMCommissions(sale, mlmPlans);
   
   // Raggruppa per livello
   const commissionsByLevel = {};
@@ -5109,6 +4969,10 @@ app.post('/api/mlm/calculate-commission', (req, res) => {
     }
   });
 });
+
+
+
+
 
 // API - Upgrade Piano MLM
 app.post('/api/mlm/upgrade-plan', (req, res) => {
@@ -5161,6 +5025,7 @@ app.post('/api/mlm/upgrade-plan', (req, res) => {
   }
   
   // Aggiorna piano utente
+  const networkStructure = calculateNetworkStructure();
   const userNetwork = networkStructure.find(n => n.userId === userId);
   if (userNetwork) {
     userNetwork.plan = newPlan;
@@ -5203,6 +5068,7 @@ app.get('/api/mlm/performance-report', (req, res) => {
     });
   }
   
+  const networkStructure = calculateNetworkStructure();
   const userNetwork = networkStructure.find(n => n.userId === user.id);
   const userPlan = userNetwork ? mlmPlans[userNetwork.plan] : mlmPlans.ambassador;
   

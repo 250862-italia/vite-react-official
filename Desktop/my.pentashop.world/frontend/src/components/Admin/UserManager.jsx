@@ -9,6 +9,8 @@ const UserManager = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showAuthorizeModal, setShowAuthorizeModal] = useState(false);
+  const [showSuspendModal, setShowSuspendModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -19,6 +21,8 @@ const UserManager = () => {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [bulkActions, setBulkActions] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [userPackages, setUserPackages] = useState([]);
+  const [packagesLoading, setPackagesLoading] = useState(false);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -138,14 +142,78 @@ const UserManager = () => {
     setShowEditModal(true);
   };
 
-  const handleViewUser = (user) => {
+  const handleViewUser = async (user) => {
     setSelectedUser(user);
     setShowViewModal(true);
+    await loadUserPackages(user.id);
+  };
+
+  const loadUserPackages = async (userId) => {
+    try {
+      setPackagesLoading(true);
+      const response = await axios.get(`http://localhost:3000/api/packages/purchased/${userId}`, { 
+        headers: getHeaders() 
+      });
+      if (response.data.success) {
+        setUserPackages(response.data.data.packages);
+      }
+    } catch (error) {
+      console.error('Errore caricamento pacchetti utente:', error);
+      setUserPackages([]);
+    } finally {
+      setPackagesLoading(false);
+    }
   };
 
   const handleDeleteClick = (user) => {
     setSelectedUser(user);
     setShowDeleteModal(true);
+  };
+
+  const handleAuthorizeUser = (user) => {
+    setSelectedUser(user);
+    setShowAuthorizeModal(true);
+  };
+
+  const handleSuspendUser = (user) => {
+    setSelectedUser(user);
+    setShowSuspendModal(true);
+  };
+
+  const confirmAuthorizeUser = async () => {
+    try {
+      const response = await axios.put(`http://localhost:3000/api/admin/users/${selectedUser.id}/authorize`, {}, { 
+        headers: getHeaders() 
+      });
+      if (response.data.success) {
+        setShowAuthorizeModal(false);
+        setSelectedUser(null);
+        loadUsers();
+        setMessage({ type: 'success', text: 'Utente autorizzato con successo!' });
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      }
+    } catch (error) {
+      console.error('Errore autorizzazione utente:', error);
+      setMessage({ type: 'error', text: error.response?.data?.error || 'Errore nell\'autorizzazione dell\'utente' });
+    }
+  };
+
+  const confirmSuspendUser = async () => {
+    try {
+      const response = await axios.put(`http://localhost:3000/api/admin/users/${selectedUser.id}/suspend`, {}, { 
+        headers: getHeaders() 
+      });
+      if (response.data.success) {
+        setShowSuspendModal(false);
+        setSelectedUser(null);
+        loadUsers();
+        setMessage({ type: 'success', text: 'Utente sospeso con successo!' });
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      }
+    } catch (error) {
+      console.error('Errore sospensione utente:', error);
+      setMessage({ type: 'error', text: error.response?.data?.error || 'Errore nella sospensione dell\'utente' });
+    }
   };
 
   const resetForm = () => {
@@ -429,6 +497,23 @@ const UserManager = () => {
                           >
                             ✏️
                           </button>
+                          {!user.isActive ? (
+                            <button
+                              onClick={() => handleAuthorizeUser(user)}
+                              className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
+                              title="Autorizza"
+                            >
+                              ✅
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleSuspendUser(user)}
+                              className="text-orange-600 hover:text-orange-900 p-1 rounded hover:bg-orange-50"
+                              title="Sospendi"
+                            >
+                              ⏸️
+                            </button>
+                          )}
                           <button
                             onClick={() => handleDeleteClick(user)}
                             className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
@@ -802,16 +887,44 @@ const UserManager = () => {
                     <p className="text-sm text-gray-900">{selectedUser.experience || 0}</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Vendite Totali</label>
-                    <p className="text-sm text-gray-900">€{selectedUser.totalSales || 0}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Commissioni Totali</label>
-                    <p className="text-sm text-gray-900">€{selectedUser.totalCommissions || 0}</p>
-                  </div>
+                
+                {/* Sezione Pacchetti Acquistati */}
+                <div className="pt-4 border-t border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">📦 Pacchetti Acquistati</h4>
+                  {packagesLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : userPackages.length > 0 ? (
+                    <div className="space-y-2">
+                      {userPackages.map((pkg, index) => (
+                        <div key={index} className="bg-gray-50 rounded-lg p-3">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{pkg.packageName}</p>
+                              <p className="text-xs text-gray-600">
+                                Acquistato: {new Date(pkg.purchaseDate).toLocaleDateString('it-IT')}
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                Costo: €{pkg.cost}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-gray-600">
+                                Commissione: {(pkg.commissionRates?.directSale * 100).toFixed(1)}%
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      <p className="text-sm">Nessun pacchetto acquistato</p>
+                    </div>
+                  )}
                 </div>
+                
                 <div className="pt-4">
                   <button
                     onClick={() => setShowViewModal(false)}
@@ -822,6 +935,60 @@ const UserManager = () => {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Authorize User Modal */}
+      {showAuthorizeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">✅ Autorizza Utente</h3>
+            <p className="text-gray-600 mb-6">
+              Sei sicuro di voler autorizzare l'utente <strong>{selectedUser?.username}</strong>? 
+              L'utente potrà accedere al sistema e utilizzare tutte le funzionalità.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={confirmAuthorizeUser}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Autorizza
+              </button>
+              <button
+                onClick={() => setShowAuthorizeModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+              >
+                Annulla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Suspend User Modal */}
+      {showSuspendModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">⏸️ Sospendi Utente</h3>
+            <p className="text-gray-600 mb-6">
+              Sei sicuro di voler sospendere l'utente <strong>{selectedUser?.username}</strong>? 
+              L'utente non potrà più accedere al sistema fino a nuova autorizzazione.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={confirmSuspendUser}
+                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+              >
+                Sospendi
+              </button>
+              <button
+                onClick={() => setShowSuspendModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+              >
+                Annulla
+              </button>
+            </div>
           </div>
         </div>
       )}
