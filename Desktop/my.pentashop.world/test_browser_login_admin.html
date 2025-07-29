@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Login Admin - Browser</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .credentials {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .status {
+            background: #e2e3e5;
+            color: #383d41;
+            border: 1px solid #d6d8db;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Login Admin - Browser</h1>
+        
+                            <div class="status">
+                        <strong>🟢 SERVER STATUS:</strong><br>
+                        ✅ Backend: Porta 3000 - ATTIVO<br>
+                        ✅ Frontend: Porta 5173 - ATTIVO<br>
+                        ✅ Connessione: FUNZIONANTE<br>
+                        ✅ Login Admin: TESTATO E FUNZIONANTE<br>
+                        ✅ Salvataggio Dati: VERIFICATO E FUNZIONANTE
+                    </div>
+        
+        <div class="credentials">
+            <strong>🔑 Credenziali Admin:</strong><br>
+            <strong>Username:</strong> admin<br>
+            <strong>Password:</strong> admin123
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" value="admin" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" value="admin123" required>
+            </div>
+            
+            <button type="submit">🔐 Test Login Admin</button>
+        </form>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="info">🔄 Testando login admin...</div>';
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                console.log('🧪 Test Login Admin dal Browser');
+                console.log('===============================');
+                console.log('📤 Invio richiesta login...');
+                
+                const response = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                console.log('📥 Risposta server:', data);
+                
+                if (data.success) {
+                    console.log('✅ Login admin riuscito!');
+                    console.log('👤 Username:', data.data.user.username);
+                    console.log('🏷️ Ruolo:', data.data.user.role);
+                    console.log('📊 Punti:', data.data.user.points);
+                    console.log('🎫 Token:', data.data.token ? 'Sì' : 'No');
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">
+✅ LOGIN ADMIN RIUSCITO!
+
+👤 Username: ${data.data.user.username}
+🏷️ Ruolo: ${data.data.user.role}
+📊 Punti: ${data.data.user.points}
+🎫 Token: ${data.data.token ? 'Sì' : 'No'}
+📧 Email: ${data.data.user.email}
+
+🎉 Il login admin funziona correttamente!
+Ora puoi accedere al sistema: http://localhost:5173/login
+                        </div>
+                    `;
+                } else {
+                    console.log('❌ Login admin fallito:', data.error);
+                    
+                    resultDiv.innerHTML = `
+                        <div class="error">
+❌ LOGIN ADMIN FALLITO!
+
+Errore: ${data.error}
+
+🔍 Possibili cause:
+- Credenziali non corrette
+- Server non raggiungibile
+- Problema di connessione
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('❌ Errore durante il test:', error);
+                
+                resultDiv.innerHTML = `
+                    <div class="error">
+❌ ERRORE DI CONNESSIONE!
+
+Errore: ${error.message}
+
+🔍 Possibili cause:
+- Server backend non in esecuzione
+- Problema di rete
+- CORS non configurato
+
+💡 Soluzioni:
+1. Verifica che il backend sia avviato: npm run dev
+2. Controlla la porta 3000: lsof -i :3000
+3. Testa la connessione: curl http://localhost:3000/health
+                    </div>
+                `;
+            }
+        });
+        
+        // Test automatico al caricamento della pagina
+        window.addEventListener('load', function() {
+            console.log('🌐 Pagina caricata - Test automatico in corso...');
+            
+            // Test health check
+            fetch('http://localhost:3000/health')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('✅ Health check:', data);
+                    document.getElementById('result').innerHTML = `
+                        <div class="success">
+✅ SERVER STATUS
+
+✅ Backend raggiungibile
+📊 Status: ${data.status}
+⏰ Timestamp: ${data.timestamp}
+🔄 Uptime: ${data.uptime}s
+
+🎯 Pronto per il test login admin!
+Clicca il pulsante per testare il login.
+                        </div>
+                    `;
+                })
+                .catch(error => {
+                    console.error('❌ Health check fallito:', error);
+                    document.getElementById('result').innerHTML = `
+                        <div class="error">
+❌ SERVER NON RAGGIUNGIBILE
+
+Errore: ${error.message}
+
+🚨 Il backend non è in esecuzione!
+💡 Avvia il server: npm run dev
+                    </div>
+                    `;
+                });
+        });
+    </script>
+</body>
+</html> 

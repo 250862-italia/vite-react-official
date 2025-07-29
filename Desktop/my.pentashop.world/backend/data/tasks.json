@@ -1,0 +1,273 @@
+[
+  {
+    "id": 1,
+    "title": "🎬 Introduzione a Wash The World",
+    "description": "Scopri la missione, i valori e la visione di Wash The World. Impara cosa ci rende diversi e perché i nostri prodotti sono la scelta migliore per l'ambiente.",
+    "type": "video",
+    "level": 1,
+    "rewards": {
+      "points": 21,
+      "tokens": 11,
+      "experience": 27
+    },
+    "content": {
+      "videoUrl": "/videos/intro-wash-world.mp4",
+      "quizQuestions": [],
+      "documentContent": "",
+      "surveyQuestions": []
+    },
+    "isActive": true,
+    "createdAt": "2025-01-15T10:00:00Z",
+    "updatedAt": "2025-07-29T08:07:15.268Z"
+  },
+  {
+    "id": 2,
+    "title": "🧪 Quiz sui Prodotti Ecologici",
+    "description": "Testa la tua conoscenza sui nostri prodotti ecologici. Rispondi alle domande per dimostrare di aver compreso le caratteristiche e i benefici dei nostri detergenti sostenibili.",
+    "type": "quiz",
+    "level": 1,
+    "rewards": {
+      "points": 30,
+      "tokens": 20,
+      "experience": 35
+    },
+    "content": {
+      "videoUrl": "",
+      "quizQuestions": [
+        {
+          "id": 1,
+          "question": "Qual è la caratteristica principale dei prodotti Wash The World?",
+          "options": [
+            "Sono più economici dei prodotti tradizionali",
+            "Sono biodegradabili al 100% e rispettano l'ambiente",
+            "Hanno profumi più intensi",
+            "Sono disponibili solo online"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "id": 2,
+          "question": "I prodotti Wash The World contengono:",
+          "options": [
+            "Solo sostanze chimiche aggressive",
+            "Solo ingredienti naturali e biodegradabili",
+            "Una miscela di prodotti chimici e naturali",
+            "Solo profumi artificiali"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "id": 3,
+          "question": "Quale valore è più importante per Wash The World?",
+          "options": [
+            "Massimizzare i profitti",
+            "La sostenibilità ambientale",
+            "La velocità di produzione",
+            "La quantità di prodotti venduti"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "id": 4,
+          "question": "I nostri prodotti sono sicuri per:",
+          "options": [
+            "Solo adulti",
+            "Adulti e bambini, ma non animali",
+            "Adulti, bambini e animali domestici",
+            "Solo per uso esterno"
+          ],
+          "correctAnswer": 2
+        }
+      ],
+      "documentContent": "",
+      "surveyQuestions": []
+    },
+    "isActive": true,
+    "createdAt": "2025-01-15T10:00:00Z",
+    "updatedAt": "2025-07-29T08:05:09.676Z"
+  },
+  {
+    "id": 3,
+    "title": "📚 Guida Completa Ambasciatore",
+    "description": "Leggi la guida completa per diventare un ambasciatore efficace. Impara le strategie di vendita, la gestione dei clienti e come costruire la tua rete di successo.",
+    "type": "document",
+    "level": 2,
+    "rewards": {
+      "points": 40,
+      "tokens": 25,
+      "experience": 45
+    },
+    "content": {
+      "videoUrl": "",
+      "quizQuestions": [],
+      "documentContent": "# 🚀 Guida Completa Ambasciatore Wash The World\n\n## La Tua Missione\n\nCome ambasciatore Wash The World, la tua missione è diffondere i valori della sostenibilità e aiutare le persone a fare scelte consapevoli per l'ambiente.\n\n## I Nostri Valori\n\n### 🌱 Sostenibilità\n- Rispetto per l'ambiente\n- Prodotti biodegradabili al 100%\n- Imballaggi riciclabili\n- Processi produttivi eco-friendly\n\n### 💚 Qualità\n- Ingredienti naturali di alta qualità\n- Efficacia testata e certificata\n- Sicurezza per tutta la famiglia\n- Profumi delicati e naturali\n\n### 🤝 Trasparenza\n- Onestà nei nostri processi\n- Informazioni chiare sui prodotti\n- Tracciabilità della filiera\n- Comunicazione aperta\n\n## Strategie di Vendita\n\n### 1. Conosci i Tuoi Prodotti\n- Studia le caratteristiche di ogni prodotto\n- Impara i benefici per l'ambiente\n- Conosci le differenze con i competitor\n- Sii pronto a rispondere alle domande\n\n### 2. Racconta la Storia\n- Condividi la missione di Wash The World\n- Spiega l'impatto ambientale positivo\n- Mostra i benefici per la salute\n- Evidenzia il risparmio a lungo termine\n\n### 3. Dimostra i Benefici\n- Usa i prodotti personalmente\n- Condividi la tua esperienza\n- Mostra i risultati concreti\n- Organizza dimostrazioni\n\n## Gestione Clienti\n\n### Comunicazione Efficace\n- Ascolta le esigenze del cliente\n- Personalizza la proposta\n- Fornisci informazioni complete\n- Mantieni un follow-up costante\n\n### Supporto Post-Vendita\n- Assisti nell'uso dei prodotti\n- Risolvi eventuali problemi\n- Mantieni il rapporto\n- Chiedi feedback\n\n## Costruire la Tua Rete\n\n### Networking\n- Partecipa a eventi locali\n- Unisciti a gruppi ambientalisti\n- Collabora con altri ambasciatori\n- Sfrutta i social media\n\n### Marketing Digitale\n- Crea contenuti educativi\n- Condividi la tua esperienza\n- Usa piattaforme social\n- Mantieni un blog o canale\n\n## Strumenti a Tua Disposizione\n\n### Materiali Promozionali\n- Brochure informative\n- Campioni prodotti\n- Video dimostrativi\n- Presentazioni digitali\n\n### Piattaforma Online\n- Dashboard personale\n- Sistema di commissioni\n- Tracciamento vendite\n- Supporto tecnico\n\n## Obiettivi e Metriche\n\n### Metriche di Successo\n- Numero di clienti acquisiti\n- Volume di vendite mensile\n- Soddisfazione clienti\n- Espansione della rete\n\n### Piani di Crescita\n- Imposta obiettivi realistici\n- Monitora i progressi\n- Adatta le strategie\n- Celebra i successi\n\n## Supporto e Risorse\n\n### Team di Supporto\n- Assistenza tecnica\n- Formazione continua\n- Materiali aggiornati\n- Consulenza personalizzata\n\n### Community\n- Forum ambasciatori\n- Eventi di networking\n- Condivisione best practices\n- Mentoring tra pari\n\n## Primi Passi\n\n1. **Completa la formazione** - Assicurati di aver seguito tutti i corsi\n2. **Ordina i campioni** - Prova personalmente i prodotti\n3. **Prepara i materiali** - Organizza brochure e presentazioni\n4. **Identifica i primi contatti** - Inizia con amici e famiglia\n5. **Pianifica la strategia** - Definisci il tuo approccio\n6. **Inizia a vendere** - Metti in pratica quanto appreso\n\n## Ricorda\n\n> *\"Ogni vendita non è solo un prodotto, ma un passo verso un mondo più pulito e sostenibile.\"*\n\nLa tua missione è importante. Ogni cliente che sceglie Wash The World contribuisce a ridurre l'inquinamento e a proteggere l'ambiente per le generazioni future.\n\n**Buona fortuna nel tuo percorso come Ambasciatore Wash The World! 🌍✨**",
+      "surveyQuestions": []
+    },
+    "isActive": true,
+    "createdAt": "2025-01-15T10:00:00Z",
+    "updatedAt": "2025-01-15T10:00:00Z"
+  },
+  {
+    "id": 4,
+    "title": "📊 Survey di Feedback Iniziale",
+    "description": "Condividi le tue opinioni e aspettative come nuovo ambasciatore. Il tuo feedback ci aiuterà a migliorare il programma di formazione e supporto.",
+    "type": "survey",
+    "level": 2,
+    "rewards": {
+      "points": 20,
+      "tokens": 10,
+      "experience": 25
+    },
+    "content": {
+      "videoUrl": "",
+      "quizQuestions": [],
+      "documentContent": "",
+      "surveyQuestions": [
+        "Come hai conosciuto Wash The World?",
+        "Quali sono le tue principali motivazioni per diventare ambasciatore?",
+        "Quali prodotti ti interessano di più?",
+        "Quali sono le tue preoccupazioni ambientali principali?",
+        "Preferisci vendere online o di persona?",
+        "Quanto tempo puoi dedicare settimanalmente all'attività?",
+        "Hai esperienza precedente in vendita o marketing?",
+        "Quali sono i tuoi obiettivi di guadagno mensile?",
+        "Come preferisci essere supportato nel tuo percorso?",
+        "Quali sono le tue aspettative dal programma ambasciatori?"
+      ]
+    },
+    "isActive": true,
+    "createdAt": "2025-01-15T10:00:00Z",
+    "updatedAt": "2025-01-15T10:00:00Z"
+  },
+  {
+    "id": 5,
+    "title": "🎥 Video Avanzato: Processi Produttivi",
+    "description": "Scopri come vengono realizzati i nostri prodotti. Questo video ti mostrerà i processi produttivi sostenibili e l'attenzione alla qualità che mettiamo in ogni fase.",
+    "type": "video",
+    "level": 3,
+    "rewards": {
+      "points": 35,
+      "tokens": 20,
+      "experience": 40
+    },
+    "content": {
+      "videoUrl": "/videos/processi-produttivi.mp4",
+      "quizQuestions": [],
+      "documentContent": "",
+      "surveyQuestions": []
+    },
+    "isActive": true,
+    "createdAt": "2025-01-15T10:00:00Z",
+    "updatedAt": "2025-01-15T10:00:00Z"
+  },
+  {
+    "id": 6,
+    "title": "🏆 Quiz Finale: Certificazione Ambasciatore",
+    "description": "Metti alla prova tutte le tue conoscenze con questo quiz finale. Superalo per ottenere la certificazione ufficiale di Ambasciatore Wash The World.",
+    "type": "quiz",
+    "level": 3,
+    "rewards": {
+      "points": 50,
+      "tokens": 30,
+      "experience": 60
+    },
+    "content": {
+      "videoUrl": "",
+      "quizQuestions": [
+        {
+          "id": 1,
+          "question": "Qual è la percentuale di biodegradabilità dei prodotti Wash The World?",
+          "options": [
+            "50%",
+            "75%",
+            "100%",
+            "90%"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "id": 2,
+          "question": "Come si chiama il sistema di commissioni di Wash The World?",
+          "options": [
+            "Sistema MLM",
+            "Sistema Pentagame",
+            "Sistema Ambassador",
+            "Sistema Wash Rewards"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "id": 3,
+          "question": "Quale di questi NON è un valore di Wash The World?",
+          "options": [
+            "Sostenibilità",
+            "Qualità",
+            "Trasparenza",
+            "Competizione aggressiva"
+          ],
+          "correctAnswer": 3
+        },
+        {
+          "id": 4,
+          "question": "I prodotti Wash The World sono sicuri per:",
+          "options": [
+            "Solo adulti",
+            "Adulti e bambini",
+            "Adulti, bambini e animali",
+            "Solo uso esterno"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "id": 5,
+          "question": "Qual è il principale vantaggio competitivo di Wash The World?",
+          "options": [
+            "Prezzi più bassi",
+            "Prodotti ecologici efficaci come quelli tradizionali",
+            "Disponibilità globale",
+            "Marketing aggressivo"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "id": 6,
+          "question": "Come dovrebbe un ambasciatore presentare i prodotti?",
+          "options": [
+            "Concentrandosi solo sul prezzo",
+            "Evidenziando benefici ambientali e qualità",
+            "Criticando i competitor",
+            "Promettendo risultati miracolosi"
+          ],
+          "correctAnswer": 1
+        },
+        {
+          "id": 7,
+          "question": "Quale strategia è più efficace per un ambasciatore?",
+          "options": [
+            "Vendere solo online",
+            "Vendere solo di persona",
+            "Combinare vendita diretta e costruzione rete",
+            "Concentrarsi solo sui social media"
+          ],
+          "correctAnswer": 2
+        },
+        {
+          "id": 8,
+          "question": "Cosa significa essere un 'Ambasciatore' Wash The World?",
+          "options": [
+            "Solo vendere prodotti",
+            "Rappresentare i valori e la missione dell'azienda",
+            "Essere un dipendente dell'azienda",
+            "Avere un negozio fisico"
+          ],
+          "correctAnswer": 1
+        }
+      ],
+      "documentContent": "",
+      "surveyQuestions": []
+    },
+    "isActive": true,
+    "createdAt": "2025-01-15T10:00:00Z",
+    "updatedAt": "2025-01-15T10:00:00Z"
+  }
+]

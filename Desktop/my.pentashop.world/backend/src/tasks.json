@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "title": "Benvenuto in Wash The World",
+    "description": "Guarda il video di benvenuto per conoscere la nostra missione",
+    "type": "video",
+    "level": 1,
+    "order": 1,
+    "isActive": true,
+    "rewards": {
+      "points": 25,
+      "tokens": 5,
+      "experience": 15
+    },
+    "createdAt": "2025-01-15",
+    "updatedAt": "2025-01-15"
+  },
+  {
+    "id": 2,
+    "title": "Quiz: Conosci Wash The World?",
+    "description": "Testa la tua conoscenza sui valori e la missione",
+    "type": "quiz",
+    "level": 1,
+    "order": 2,
+    "isActive": true,
+    "rewards": {
+      "points": 50,
+      "tokens": 10,
+      "experience": 25
+    },
+    "createdAt": "2025-01-15",
+    "updatedAt": "2025-01-15"
+  },
+  {
+    "id": 3,
+    "title": "Leggi la Guida Completa",
+    "description": "Scopri tutti i dettagli su prodotti e opportunità",
+    "type": "document",
+    "level": 1,
+    "order": 3,
+    "isActive": true,
+    "rewards": {
+      "points": 30,
+      "tokens": 8,
+      "experience": 20
+    },
+    "createdAt": "2025-01-15",
+    "updatedAt": "2025-01-15"
+  },
+  {
+    "id": 4,
+    "title": "Survey di Feedback",
+    "description": "Condividi le tue opinioni e aspettative",
+    "type": "survey",
+    "level": 1,
+    "order": 4,
+    "isActive": true,
+    "rewards": {
+      "points": 20,
+      "tokens": 3,
+      "experience": 10
+    },
+    "createdAt": "2025-01-15",
+    "updatedAt": "2025-01-15"
+  },
+  {
+    "id": 5,
+    "title": "Video: Prodotti Sostenibili",
+    "description": "Scopri la nostra gamma di prodotti eco-friendly",
+    "type": "video",
+    "level": 2,
+    "order": 5,
+    "isActive": true,
+    "rewards": {
+      "points": 40,
+      "tokens": 12,
+      "experience": 30
+    },
+    "createdAt": "2025-01-15",
+    "updatedAt": "2025-01-15"
+  }
+]

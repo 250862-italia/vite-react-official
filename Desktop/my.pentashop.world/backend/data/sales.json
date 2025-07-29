@@ -1,0 +1,81 @@
+[
+  {
+    "id": 1,
+    "userId": 1,
+    "amount": 500,
+    "date": "2025-07-28",
+    "type": "direct_sale",
+    "product": "Kit Eco-Friendly",
+    "commissionEarned": 100,
+    "status": "completed"
+  },
+  {
+    "id": 2,
+    "userId": 2,
+    "amount": 800,
+    "date": "2025-07-28",
+    "type": "direct_sale",
+    "product": "Set Prodotti Sostenibili",
+    "commissionEarned": 252,
+    "status": "completed"
+  },
+  {
+    "id": 3,
+    "userId": 3,
+    "amount": 300,
+    "date": "2025-07-27",
+    "type": "direct_sale",
+    "product": "Detergente Naturale",
+    "commissionEarned": 60,
+    "status": "completed"
+  },
+  {
+    "id": 4,
+    "userId": 4,
+    "amount": 200,
+    "date": "2025-07-26",
+    "type": "direct_sale",
+    "product": "Spray Eco",
+    "commissionEarned": 40,
+    "status": "completed"
+  },
+  {
+    "id": 5,
+    "userId": 5,
+    "amount": 600,
+    "date": "2025-07-25",
+    "type": "direct_sale",
+    "product": "Kit Completo",
+    "commissionEarned": 189,
+    "status": "completed"
+  },
+  {
+    "id": 6,
+    "userId": 1,
+    "productName": "Detergente Eco",
+    "amount": 150,
+    "commissionRate": 0.05,
+    "commissionEarned": 7.5,
+    "status": "completed",
+    "date": "2025-07-29T10:03:57.648Z",
+    "createdAt": "2025-07-29T10:03:57.649Z"
+  },
+  {
+    "id": 7,
+    "userId": 1,
+    "products": [
+      {
+        "name": "Detergente Eco",
+        "quantity": 1,
+        "price": 150
+      }
+    ],
+    "amount": 150,
+    "commissionRate": 0.05,
+    "commissionEarned": 7.5,
+    "status": "completed",
+    "date": "2025-07-29T10:04:25.755Z",
+    "createdAt": "2025-07-29T10:04:25.756Z",
+    "updatedAt": "2025-07-29T10:04:25.756Z"
+  }
+]

@@ -1,0 +1,193 @@
+[
+  {
+    "id": 1,
+    "username": "testuser",
+    "email": "test@example.com",
+    "firstName": "Mario",
+    "lastName": "Rossi",
+    "password": "password",
+    "level": 1,
+    "experience": 145,
+    "experienceToNextLevel": 100,
+    "onboardingLevel": 5,
+    "points": 210,
+    "tokens": 60,
+    "role": "entry_ambassador",
+    "commissionRate": 0.05,
+    "referralCode": "MARO879395-EU2W-*-O",
+    "totalSales": 150,
+    "totalCommissions": 7.5,
+    "wallet": {
+      "balance": 150,
+      "transactions": [
+        {
+          "id": 1,
+          "type": "commission",
+          "amount": 25,
+          "date": "2025-07-28"
+        },
+        {
+          "id": 2,
+          "type": "bonus",
+          "amount": 10,
+          "date": "2025-07-25"
+        }
+      ]
+    },
+    "badges": [],
+    "completedTasks": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "isActive": true,
+    "createdAt": "2025-01-15",
+    "lastLogin": "2025-07-28T10:30:00Z",
+    "updatedAt": "2025-07-29T10:04:25.757Z",
+    "hasSeenWelcome": true,
+    "subscriptionActive": true,
+    "kycStatus": "approved",
+    "success": true,
+    "data": {
+      "id": 1,
+      "username": "testuser",
+      "email": "test@example.com",
+      "firstName": "Mario",
+      "lastName": "Rossi",
+      "password": "password",
+      "level": 1,
+      "experience": 145,
+      "experienceToNextLevel": 100,
+      "onboardingLevel": 5,
+      "points": 210,
+      "tokens": 60,
+      "role": "entry_ambassador",
+      "commissionRate": 0.05,
+      "referralCode": "MARO879395-EU2W-*-O",
+      "totalSales": 500,
+      "totalCommissions": 25,
+      "wallet": {
+        "balance": 150,
+        "transactions": [
+          {
+            "id": 1,
+            "type": "commission",
+            "amount": 25,
+            "date": "2025-07-28"
+          },
+          {
+            "id": 2,
+            "type": "bonus",
+            "amount": 10,
+            "date": "2025-07-25"
+          }
+        ]
+      },
+      "badges": [],
+      "completedTasks": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "isActive": true,
+      "createdAt": "2025-01-15",
+      "lastLogin": "2025-07-28T10:30:00Z",
+      "updatedAt": "2025-07-28T20:54:55.391Z",
+      "hasSeenWelcome": true,
+      "subscriptionActive": true,
+      "kycStatus": "approved"
+    }
+  },
+  {
+    "id": 2,
+    "username": "admin",
+    "email": "admin@washworld.com",
+    "firstName": "Admin",
+    "lastName": "System",
+    "password": "admin123",
+    "level": 10,
+    "experience": 1000,
+    "experienceToNextLevel": 0,
+    "onboardingLevel": 5,
+    "points": 5000,
+    "tokens": 500,
+    "role": "admin",
+    "commissionRate": 0.15,
+    "referralCode": "ADMIN2025",
+    "totalSales": 50000,
+    "totalCommissions": 7500,
+    "wallet": {
+      "balance": 10000,
+      "transactions": [
+        {
+          "id": 1,
+          "type": "commission",
+          "amount": 5000,
+          "date": "2025-07-28"
+        },
+        {
+          "id": 2,
+          "type": "bonus",
+          "amount": 2500,
+          "date": "2025-07-25"
+        }
+      ]
+    },
+    "badges": [
+      "admin",
+      "top_performer",
+      "early_adopter"
+    ],
+    "completedTasks": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "isActive": true,
+    "createdAt": "2024-12-01",
+    "lastLogin": "2025-07-28T12:00:00Z",
+    "updatedAt": "2025-07-28T20:54:55.391Z",
+    "hasSeenWelcome": true,
+    "subscriptionActive": true,
+    "kycStatus": "approved"
+  },
+  {
+    "id": 3,
+    "username": "nuovo_utente",
+    "email": "nuovo@example.com",
+    "firstName": "Giovanni",
+    "lastName": "Bianchi",
+    "password": "password123",
+    "level": 1,
+    "experience": 0,
+    "experienceToNextLevel": 100,
+    "onboardingLevel": 1,
+    "points": 50,
+    "tokens": 25,
+    "role": "entry_ambassador",
+    "commissionRate": 0.05,
+    "referralCode": "GIBI416363-MQ2W-*-1",
+    "totalSales": 0,
+    "totalCommissions": 0,
+    "wallet": {
+      "balance": 0,
+      "transactions": []
+    },
+    "badges": [],
+    "completedTasks": [],
+    "isActive": true,
+    "createdAt": "2025-07-29T10:03:36.363Z",
+    "lastLogin": null,
+    "updatedAt": "2025-07-29T10:03:40.413Z",
+    "hasSeenWelcome": false,
+    "subscriptionActive": false,
+    "kycStatus": "pending",
+    "isOnboardingComplete": false
+  }
+]

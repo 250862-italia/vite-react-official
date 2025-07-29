@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Admin Problem</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test Admin Problem</h1>
+    
+    <div class="test-section info">
+        <h3>1️⃣ Test Login Admin</h3>
+        <button onclick="testAdminLogin()">Test Login Admin</button>
+        <div id="login-result"></div>
+    </div>
+
+    <div class="test-section info">
+        <h3>2️⃣ Test LocalStorage</h3>
+        <button onclick="testLocalStorage()">Test LocalStorage</button>
+        <div id="localstorage-result"></div>
+    </div>
+
+    <div class="test-section info">
+        <h3>3️⃣ Test Role Check</h3>
+        <button onclick="testRoleCheck()">Test Role Check</button>
+        <div id="role-result"></div>
+    </div>
+
+    <div class="test-section info">
+        <h3>4️⃣ Clear LocalStorage</h3>
+        <button onclick="clearLocalStorage()">Clear LocalStorage</button>
+        <div id="clear-result"></div>
+    </div>
+
+    <script>
+        async function testAdminLogin() {
+            const resultDiv = document.getElementById('login-result');
+            resultDiv.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Login Successful</h4>
+                            <pre>${JSON.stringify(data.data.user, null, 2)}</pre>
+                            <p><strong>Role:</strong> ${data.data.user.role}</p>
+                            <p><strong>Token:</strong> ${data.data.token}</p>
+                        </div>
+                    `;
+                    
+                    // Save to localStorage
+                    localStorage.setItem('token', data.data.token);
+                    localStorage.setItem('user', JSON.stringify(data.data.user));
+                    
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Login Failed</h4>
+                            <p>${data.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function testLocalStorage() {
+            const resultDiv = document.getElementById('localstorage-result');
+            
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (token && user) {
+                const userData = JSON.parse(user);
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ LocalStorage Data Found</h4>
+                        <p><strong>Token:</strong> ${token}</p>
+                        <p><strong>User Role:</strong> ${userData.role}</p>
+                        <p><strong>Role Type:</strong> ${typeof userData.role}</p>
+                        <p><strong>Role Length:</strong> ${userData.role.length}</p>
+                        <p><strong>Role === "admin":</strong> ${userData.role === 'admin'}</p>
+                        <pre>${JSON.stringify(userData, null, 2)}</pre>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ No LocalStorage Data</h4>
+                        <p>Token: ${token || 'null'}</p>
+                        <p>User: ${user || 'null'}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function testRoleCheck() {
+            const resultDiv = document.getElementById('role-result');
+            
+            const user = localStorage.getItem('user');
+            
+            if (user) {
+                const userData = JSON.parse(user);
+                const role = userData.role;
+                
+                // Simulate AdminDashboard check
+                if (role !== 'admin') {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Role Check Failed</h4>
+                            <p><strong>Current Role:</strong> "${role}"</p>
+                            <p><strong>Role Type:</strong> ${typeof role}</p>
+                            <p><strong>Role Length:</strong> ${role.length}</p>
+                            <p><strong>Should redirect to:</strong> /dashboard (ERROR!)</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Role Check Passed</h4>
+                            <p><strong>Current Role:</strong> "${role}"</p>
+                            <p><strong>Should stay in:</strong> /admin</p>
+                        </div>
+                    `;
+                }
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ No User Data</h4>
+                        <p>Please login first</p>
+                    </div>
+                `;
+            }
+        }
+
+        function clearLocalStorage() {
+            const resultDiv = document.getElementById('clear-result');
+            
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            
+            resultDiv.innerHTML = `
+                <div class="success">
+                    <h4>✅ LocalStorage Cleared</h4>
+                    <p>Token and user data removed</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html> 

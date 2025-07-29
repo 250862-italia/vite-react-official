@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Admin Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .log {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Test Admin Login</h1>
+        
+        <div class="test-section info">
+            <h3>1️⃣ Test Backend Connection</h3>
+            <button onclick="testBackend()">Test Backend</button>
+            <div id="backend-result" class="log"></div>
+        </div>
+
+        <div class="test-section info">
+            <h3>2️⃣ Test Admin Login</h3>
+            <button onclick="testAdminLogin()">Login Admin</button>
+            <div id="login-result" class="log"></div>
+        </div>
+
+        <div class="test-section info">
+            <h3>3️⃣ Test localStorage</h3>
+            <button onclick="testLocalStorage()">Check localStorage</button>
+            <div id="localStorage-result" class="log"></div>
+        </div>
+
+        <div class="test-section info">
+            <h3>4️⃣ Test Role Check</h3>
+            <button onclick="testRoleCheck()">Check Role</button>
+            <div id="role-result" class="log"></div>
+        </div>
+
+        <div class="test-section info">
+            <h3>5️⃣ Clear localStorage</h3>
+            <button onclick="clearLocalStorage()">Clear All</button>
+            <div id="clear-result" class="log"></div>
+        </div>
+
+        <div class="test-section info">
+            <h3>6️⃣ Simulate Frontend Flow</h3>
+            <button onclick="simulateFrontendFlow()">Simulate Flow</button>
+            <div id="flow-result" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+        let logs = {};
+
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            element.textContent += logEntry;
+            element.scrollTop = element.scrollHeight;
+        }
+
+        async function testBackend() {
+            log('backend-result', 'Testing backend connection...');
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                log('backend-result', `✅ Backend OK: ${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                log('backend-result', `❌ Backend Error: ${error.message}`);
+            }
+        }
+
+        async function testAdminLogin() {
+            log('login-result', 'Testing admin login...');
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    log('login-result', `✅ Login successful`);
+                    log('login-result', `👤 User: ${data.data.user.firstName} ${data.data.user.lastName}`);
+                    log('login-result', `🎯 Role: ${data.data.user.role}`);
+                    log('login-result', `🔑 Token: ${data.data.token ? 'YES' : 'NO'}`);
+                    
+                    // Save to localStorage
+                    localStorage.setItem('token', data.data.token);
+                    localStorage.setItem('user', JSON.stringify(data.data.user));
+                    log('login-result', `💾 Saved to localStorage`);
+                    
+                    logs.loginData = data;
+                } else {
+                    log('login-result', `❌ Login failed: ${data.error}`);
+                }
+            } catch (error) {
+                log('login-result', `❌ Login error: ${error.message}`);
+            }
+        }
+
+        function testLocalStorage() {
+            log('localStorage-result', 'Checking localStorage...');
+            
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            log('localStorage-result', `Token: ${token ? 'YES' : 'NO'}`);
+            log('localStorage-result', `User: ${user ? 'YES' : 'NO'}`);
+            
+            if (user) {
+                try {
+                    const userData = JSON.parse(user);
+                    log('localStorage-result', `👤 User data: ${JSON.stringify(userData, null, 2)}`);
+                    log('localStorage-result', `🎯 Role: ${userData.role}`);
+                } catch (error) {
+                    log('localStorage-result', `❌ Error parsing user data: ${error.message}`);
+                }
+            }
+        }
+
+        function testRoleCheck() {
+            log('role-result', 'Testing role check...');
+            
+            const user = localStorage.getItem('user');
+            if (!user) {
+                log('role-result', '❌ No user data in localStorage');
+                return;
+            }
+
+            try {
+                const userData = JSON.parse(user);
+                log('role-result', `👤 User role: ${userData.role}`);
+                log('role-result', `🔍 Role type: ${typeof userData.role}`);
+                log('role-result', `🔍 Role === "admin": ${userData.role === 'admin'}`);
+                log('role-result', `🔍 Role length: ${userData.role.length}`);
+                log('role-result', `🔍 Role trimmed: "${userData.role.trim()}"`);
+                
+                if (userData.role === 'admin') {
+                    log('role-result', '✅ User is admin - should redirect to /admin');
+                } else {
+                    log('role-result', '❌ User is not admin - should redirect to /dashboard');
+                }
+            } catch (error) {
+                log('role-result', `❌ Error checking role: ${error.message}`);
+            }
+        }
+
+        function clearLocalStorage() {
+            log('clear-result', 'Clearing localStorage...');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            log('clear-result', '✅ localStorage cleared');
+        }
+
+        async function simulateFrontendFlow() {
+            log('flow-result', 'Simulating frontend flow...');
+            
+            // Step 1: Check if already logged in
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (token && user) {
+                log('flow-result', '✅ Already logged in');
+                testRoleCheck();
+            } else {
+                log('flow-result', '❌ Not logged in - need to login first');
+            }
+        }
+
+        // Auto-run tests on page load
+        window.onload = function() {
+            log('backend-result', 'Page loaded - ready for testing');
+            log('localStorage-result', 'Page loaded - ready for testing');
+            log('login-result', 'Page loaded - ready for testing');
+            log('role-result', 'Page loaded - ready for testing');
+            log('clear-result', 'Page loaded - ready for testing');
+            log('flow-result', 'Page loaded - ready for testing');
+        };
+    </script>
+</body>
+</html> 
