@@ -902,6 +902,821 @@ app.get('/api/profile/badges', verifyToken, (req, res) => {
   }
 });
 
+// ==================== KYC CRUD SYSTEM ====================
+
+// Funzione per caricare le richieste KYC
+function loadKYCSubmissions() {
+  try {
+    const kycPath = path.join(__dirname, '../data/kyc-submissions.json');
+    const kycData = fs.readFileSync(kycPath, 'utf8');
+    return JSON.parse(kycData);
+  } catch (error) {
+    console.error('❌ Errore caricamento KYC:', error);
+    return [];
+  }
+}
+
+// Funzione per salvare le richieste KYC
+function saveKYCSubmissions(kycData) {
+  try {
+    const kycPath = path.join(__dirname, '../data/kyc-submissions.json');
+    fs.writeFileSync(kycPath, JSON.stringify(kycData, null, 2));
+    return true;
+  } catch (error) {
+    console.error('❌ Errore salvataggio KYC:', error);
+    return false;
+  }
+}
+
+// API - Ottieni tutte le richieste KYC (Admin)
+app.get('/api/admin/kyc', verifyToken, (req, res) => {
+  try {
+    // Verifica che l'utente sia admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Accesso negato. Solo gli amministratori possono accedere.'
+      });
+    }
+
+    const kycSubmissions = loadKYCSubmissions();
+    const users = loadUsersFromFile();
+
+    // Arricchisci i dati KYC con le informazioni utente
+    const enrichedKYC = kycSubmissions.map(kyc => {
+      const user = users.find(u => u.id === kyc.userId);
+      return {
+        ...kyc,
+        userInfo: user ? {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role
+        } : null
+      };
+    });
+
+    console.log('📋 Admin: Richiesta lista KYC');
+    console.log('📊 KYC disponibili:', enrichedKYC.length);
+
+    res.json({
+      success: true,
+      data: enrichedKYC
+    });
+  } catch (error) {
+    console.error('❌ Errore caricamento KYC:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
+// API - Ottieni singola richiesta KYC (Admin)
+app.get('/api/admin/kyc/:kycId', verifyToken, (req, res) => {
+  try {
+    const { kycId } = req.params;
+
+    // Verifica che l'utente sia admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Accesso negato. Solo gli amministratori possono accedere.'
+      });
+    }
+
+    const kycSubmissions = loadKYCSubmissions();
+    const kyc = kycSubmissions.find(k => k.kycId === kycId);
+
+    if (!kyc) {
+      return res.status(404).json({
+        success: false,
+        error: 'Richiesta KYC non trovata'
+      });
+    }
+
+    const users = loadUsersFromFile();
+    const user = users.find(u => u.id === kyc.userId);
+
+    const enrichedKYC = {
+      ...kyc,
+      userInfo: user ? {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role
+      } : null
+    };
+
+    res.json({
+      success: true,
+      data: enrichedKYC
+    });
+  } catch (error) {
+    console.error('❌ Errore caricamento KYC:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
+// API - Aggiorna stato KYC (Approvare/Rifiutare/Pausa)
+app.put('/api/admin/kyc/:kycId/status', verifyToken, async (req, res) => {
+  try {
+    const { kycId } = req.params;
+    const { status, notes } = req.body;
+
+    // Verifica che l'utente sia admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Accesso negato. Solo gli amministratori possono modificare lo stato KYC.'
+      });
+    }
+
+    // Validazione status
+    const validStatuses = ['approved', 'rejected', 'pending', 'paused'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Stato non valido. Stati permessi: approved, rejected, pending, paused'
+      });
+    }
+
+    const kycSubmissions = loadKYCSubmissions();
+    const kycIndex = kycSubmissions.findIndex(k => k.kycId === kycId);
+
+    if (kycIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: 'Richiesta KYC non trovata'
+      });
+    }
+
+    const kyc = kycSubmissions[kycIndex];
+    const oldStatus = kyc.status;
+
+    // Aggiorna lo stato
+    kyc.status = status;
+    kyc.processedAt = new Date().toISOString();
+    kyc.processedBy = req.user.id;
+    if (notes) {
+      kyc.adminNotes = notes;
+    }
+
+    // Se approvato, aggiorna l'utente
+    if (status === 'approved' && oldStatus !== 'approved') {
+      const users = loadUsersFromFile();
+      const userIndex = users.findIndex(u => u.id === kyc.userId);
+      
+      if (userIndex !== -1) {
+        users[userIndex].isKYCApproved = true;
+        users[userIndex].kycApprovedAt = new Date().toISOString();
+        users[userIndex].updatedAt = new Date().toISOString();
+        saveUsersToFile(users);
+      }
+    }
+
+    // Salva le modifiche
+    if (saveKYCSubmissions(kycSubmissions)) {
+      console.log(`✅ Admin: KYC ${kycId} ${status} da ${req.user.username}`);
+      
+      res.json({
+        success: true,
+        data: {
+          message: `Stato KYC aggiornato con successo a ${status}`,
+          kyc: kyc
+        }
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: 'Errore nel salvataggio delle modifiche'
+      });
+    }
+  } catch (error) {
+    console.error('❌ Errore aggiornamento stato KYC:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
+// API - Elimina richiesta KYC (Admin)
+app.delete('/api/admin/kyc/:kycId', verifyToken, (req, res) => {
+  try {
+    const { kycId } = req.params;
+
+    // Verifica che l'utente sia admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Accesso negato. Solo gli amministratori possono eliminare le richieste KYC.'
+      });
+    }
+
+    const kycSubmissions = loadKYCSubmissions();
+    const kycIndex = kycSubmissions.findIndex(k => k.kycId === kycId);
+
+    if (kycIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: 'Richiesta KYC non trovata'
+      });
+    }
+
+    const deletedKYC = kycSubmissions[kycIndex];
+    kycSubmissions.splice(kycIndex, 1);
+
+    if (saveKYCSubmissions(kycSubmissions)) {
+      console.log(`🗑️ Admin: Eliminazione KYC ${kycId} da ${req.user.username}`);
+      
+      res.json({
+        success: true,
+        data: {
+          message: 'Richiesta KYC eliminata con successo',
+          deletedKYC: deletedKYC
+        }
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: 'Errore nel salvataggio delle modifiche'
+      });
+    }
+  } catch (error) {
+    console.error('❌ Errore eliminazione KYC:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
+// API - Filtra richieste KYC (Admin)
+app.get('/api/admin/kyc/filter', verifyToken, (req, res) => {
+  try {
+    const { status, search } = req.query;
+
+    // Verifica che l'utente sia admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Accesso negato. Solo gli amministratori possono filtrare le richieste KYC.'
+      });
+    }
+
+    let kycSubmissions = loadKYCSubmissions();
+    const users = loadUsersFromFile();
+
+    // Filtra per status
+    if (status && status !== 'all') {
+      kycSubmissions = kycSubmissions.filter(kyc => kyc.status === status);
+    }
+
+    // Filtra per ricerca
+    if (search) {
+      kycSubmissions = kycSubmissions.filter(kyc => {
+        const user = users.find(u => u.id === kyc.userId);
+        if (!user) return false;
+        
+        return user.firstName?.toLowerCase().includes(search.toLowerCase()) ||
+               user.lastName?.toLowerCase().includes(search.toLowerCase()) ||
+               user.email?.toLowerCase().includes(search.toLowerCase()) ||
+               kyc.kycId?.toLowerCase().includes(search.toLowerCase());
+      });
+    }
+
+    // Arricchisci i dati
+    const enrichedKYC = kycSubmissions.map(kyc => {
+      const user = users.find(u => u.id === kyc.userId);
+      return {
+        ...kyc,
+        userInfo: user ? {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role
+        } : null
+      };
+    });
+
+    res.json({
+      success: true,
+      data: enrichedKYC
+    });
+  } catch (error) {
+    console.error('❌ Errore filtro KYC:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
+// API - Statistiche KYC (Admin)
+app.get('/api/admin/kyc/stats', verifyToken, (req, res) => {
+  try {
+    // Verifica che l'utente sia admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Accesso negato. Solo gli amministratori possono accedere alle statistiche KYC.'
+      });
+    }
+
+    const kycSubmissions = loadKYCSubmissions();
+    
+    const stats = {
+      total: kycSubmissions.length,
+      pending: kycSubmissions.filter(k => k.status === 'pending').length,
+      approved: kycSubmissions.filter(k => k.status === 'approved').length,
+      rejected: kycSubmissions.filter(k => k.status === 'rejected').length,
+      paused: kycSubmissions.filter(k => k.status === 'paused').length,
+      today: kycSubmissions.filter(k => {
+        const today = new Date().toDateString();
+        const submissionDate = new Date(k.submittedAt).toDateString();
+        return today === submissionDate;
+      }).length,
+      thisWeek: kycSubmissions.filter(k => {
+        const now = new Date();
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const submissionDate = new Date(k.submittedAt);
+        return submissionDate >= weekAgo;
+      }).length
+    };
+
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('❌ Errore statistiche KYC:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
+// ==================== SALES CRUD SYSTEM ====================
+
+// Funzione per caricare le vendite
+function loadSales() {
+  try {
+    const salesPath = path.join(__dirname, '../data/sales.json');
+    const salesData = fs.readFileSync(salesPath, 'utf8');
+    return JSON.parse(salesData);
+  } catch (error) {
+    console.error('❌ Errore caricamento vendite:', error);
+    return [];
+  }
+}
+
+// Funzione per salvare le vendite
+function saveSales(salesData) {
+  try {
+    const salesPath = path.join(__dirname, '../data/sales.json');
+    fs.writeFileSync(salesPath, JSON.stringify(salesData, null, 2));
+    return true;
+  } catch (error) {
+    console.error('❌ Errore salvataggio vendite:', error);
+    return false;
+  }
+}
+
+// API - Ottieni tutte le vendite (Admin)
+app.get('/api/admin/sales', verifyToken, (req, res) => {
+  try {
+    // Verifica che l'utente sia admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Accesso negato. Solo gli amministratori possono accedere alle vendite.'
+      });
+    }
+
+    const sales = loadSales();
+    const users = loadUsersFromFile();
+
+    // Arricchisci i dati vendite con le informazioni utente
+    const enrichedSales = sales.map(sale => {
+      const user = users.find(u => u.id === sale.ambassadorId);
+      return {
+        ...sale,
+        ambassadorInfo: user ? {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role
+        } : null
+      };
+    });
+
+    console.log('💰 Admin: Richiesta lista vendite');
+    console.log('📊 Vendite disponibili:', enrichedSales.length);
+
+    res.json({
+      success: true,
+      data: enrichedSales
+    });
+  } catch (error) {
+    console.error('❌ Errore caricamento vendite:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
+// API - Ottieni singola vendita (Admin)
+app.get('/api/admin/sales/:saleId', verifyToken, (req, res) => {
+  try {
+    const { saleId } = req.params;
+
+    // Verifica che l'utente sia admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Accesso negato. Solo gli amministratori possono accedere alle vendite.'
+      });
+    }
+
+    const sales = loadSales();
+    const sale = sales.find(s => s.saleId === saleId);
+
+    if (!sale) {
+      return res.status(404).json({
+        success: false,
+        error: 'Vendita non trovata'
+      });
+    }
+
+    const users = loadUsersFromFile();
+    const user = users.find(u => u.id === sale.ambassadorId);
+
+    const enrichedSale = {
+      ...sale,
+      ambassadorInfo: user ? {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role
+      } : null
+    };
+
+    res.json({
+      success: true,
+      data: enrichedSale
+    });
+  } catch (error) {
+    console.error('❌ Errore caricamento vendita:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
+// API - Crea nuova vendita (Admin)
+app.post('/api/admin/sales', verifyToken, (req, res) => {
+  try {
+    const { ambassadorId, customerName, customerEmail, products, totalAmount, commissionRate, status, notes } = req.body;
+
+    // Verifica che l'utente sia admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Accesso negato. Solo gli amministratori possono creare vendite.'
+      });
+    }
+
+    // Validazione dati
+    if (!ambassadorId || !customerName || !products || !totalAmount) {
+      return res.status(400).json({
+        success: false,
+        error: 'Dati mancanti. Richiesti: ambassadorId, customerName, products, totalAmount'
+      });
+    }
+
+    const sales = loadSales();
+    const users = loadUsersFromFile();
+    
+    // Verifica che l'ambassador esista
+    const ambassador = users.find(u => u.id === ambassadorId && u.role === 'ambassador');
+    if (!ambassador) {
+      return res.status(400).json({
+        success: false,
+        error: 'Ambassador non trovato o non valido'
+      });
+    }
+
+    const newSale = {
+      saleId: `SALE_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      ambassadorId: parseInt(ambassadorId),
+      customerName,
+      customerEmail: customerEmail || '',
+      products: Array.isArray(products) ? products : [products],
+      totalAmount: parseFloat(totalAmount),
+      commissionRate: commissionRate || ambassador.commissionRate || 0.05,
+      commissionAmount: parseFloat(totalAmount) * (commissionRate || ambassador.commissionRate || 0.05),
+      status: status || 'pending',
+      notes: notes || '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    sales.push(newSale);
+
+    if (saveSales(sales)) {
+      console.log(`✅ Admin: Creata vendita ${newSale.saleId} da ${req.user.username}`);
+      
+      res.json({
+        success: true,
+        data: {
+          message: 'Vendita creata con successo',
+          sale: newSale
+        }
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: 'Errore nel salvataggio della vendita'
+      });
+    }
+  } catch (error) {
+    console.error('❌ Errore creazione vendita:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
+// API - Aggiorna vendita (Admin)
+app.put('/api/admin/sales/:saleId', verifyToken, (req, res) => {
+  try {
+    const { saleId } = req.params;
+    const { customerName, customerEmail, products, totalAmount, commissionRate, status, notes } = req.body;
+
+    // Verifica che l'utente sia admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Accesso negato. Solo gli amministratori possono modificare le vendite.'
+      });
+    }
+
+    const sales = loadSales();
+    const saleIndex = sales.findIndex(s => s.saleId === saleId);
+
+    if (saleIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: 'Vendita non trovata'
+      });
+    }
+
+    const sale = sales[saleIndex];
+    const users = loadUsersFromFile();
+    const ambassador = users.find(u => u.id === sale.ambassadorId);
+
+    // Aggiorna i campi
+    if (customerName !== undefined) sale.customerName = customerName;
+    if (customerEmail !== undefined) sale.customerEmail = customerEmail;
+    if (products !== undefined) sale.products = Array.isArray(products) ? products : [products];
+    if (totalAmount !== undefined) {
+      sale.totalAmount = parseFloat(totalAmount);
+      sale.commissionAmount = sale.totalAmount * (sale.commissionRate || ambassador?.commissionRate || 0.05);
+    }
+    if (commissionRate !== undefined) {
+      sale.commissionRate = parseFloat(commissionRate);
+      sale.commissionAmount = sale.totalAmount * sale.commissionRate;
+    }
+    if (status !== undefined) sale.status = status;
+    if (notes !== undefined) sale.notes = notes;
+    
+    sale.updatedAt = new Date().toISOString();
+
+    if (saveSales(sales)) {
+      console.log(`✅ Admin: Aggiornata vendita ${saleId} da ${req.user.username}`);
+      
+      res.json({
+        success: true,
+        data: {
+          message: 'Vendita aggiornata con successo',
+          sale: sale
+        }
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: 'Errore nel salvataggio delle modifiche'
+      });
+    }
+  } catch (error) {
+    console.error('❌ Errore aggiornamento vendita:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
+// API - Elimina vendita (Admin)
+app.delete('/api/admin/sales/:saleId', verifyToken, (req, res) => {
+  try {
+    const { saleId } = req.params;
+
+    // Verifica che l'utente sia admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Accesso negato. Solo gli amministratori possono eliminare le vendite.'
+      });
+    }
+
+    const sales = loadSales();
+    const saleIndex = sales.findIndex(s => s.saleId === saleId);
+
+    if (saleIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: 'Vendita non trovata'
+      });
+    }
+
+    const deletedSale = sales[saleIndex];
+    sales.splice(saleIndex, 1);
+
+    if (saveSales(sales)) {
+      console.log(`🗑️ Admin: Eliminazione vendita ${saleId} da ${req.user.username}`);
+      
+      res.json({
+        success: true,
+        data: {
+          message: 'Vendita eliminata con successo',
+          deletedSale: deletedSale
+        }
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: 'Errore nel salvataggio delle modifiche'
+      });
+    }
+  } catch (error) {
+    console.error('❌ Errore eliminazione vendita:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
+// API - Filtra vendite (Admin)
+app.get('/api/admin/sales/filter', verifyToken, (req, res) => {
+  try {
+    const { status, ambassadorId, dateFrom, dateTo, search } = req.query;
+
+    // Verifica che l'utente sia admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Accesso negato. Solo gli amministratori possono filtrare le vendite.'
+      });
+    }
+
+    let sales = loadSales();
+    const users = loadUsersFromFile();
+
+    // Filtra per status
+    if (status && status !== 'all') {
+      sales = sales.filter(sale => sale.status === status);
+    }
+
+    // Filtra per ambassador
+    if (ambassadorId && ambassadorId !== 'all') {
+      sales = sales.filter(sale => sale.ambassadorId === parseInt(ambassadorId));
+    }
+
+    // Filtra per data
+    if (dateFrom) {
+      const fromDate = new Date(dateFrom);
+      sales = sales.filter(sale => new Date(sale.createdAt) >= fromDate);
+    }
+
+    if (dateTo) {
+      const toDate = new Date(dateTo);
+      sales = sales.filter(sale => new Date(sale.createdAt) <= toDate);
+    }
+
+    // Filtra per ricerca
+    if (search) {
+      sales = sales.filter(sale => {
+        const ambassador = users.find(u => u.id === sale.ambassadorId);
+        return sale.customerName?.toLowerCase().includes(search.toLowerCase()) ||
+               sale.customerEmail?.toLowerCase().includes(search.toLowerCase()) ||
+               sale.saleId?.toLowerCase().includes(search.toLowerCase()) ||
+               ambassador?.firstName?.toLowerCase().includes(search.toLowerCase()) ||
+               ambassador?.lastName?.toLowerCase().includes(search.toLowerCase());
+      });
+    }
+
+    // Arricchisci i dati
+    const enrichedSales = sales.map(sale => {
+      const user = users.find(u => u.id === sale.ambassadorId);
+      return {
+        ...sale,
+        ambassadorInfo: user ? {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role
+        } : null
+      };
+    });
+
+    res.json({
+      success: true,
+      data: enrichedSales
+    });
+  } catch (error) {
+    console.error('❌ Errore filtro vendite:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
+// API - Statistiche vendite (Admin)
+app.get('/api/admin/sales/stats', verifyToken, (req, res) => {
+  try {
+    // Verifica che l'utente sia admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Accesso negato. Solo gli amministratori possono accedere alle statistiche vendite.'
+      });
+    }
+
+    const sales = loadSales();
+    
+    const stats = {
+      total: sales.length,
+      totalAmount: sales.reduce((sum, sale) => sum + sale.totalAmount, 0),
+      totalCommissions: sales.reduce((sum, sale) => sum + sale.commissionAmount, 0),
+      pending: sales.filter(s => s.status === 'pending').length,
+      completed: sales.filter(s => s.status === 'completed').length,
+      cancelled: sales.filter(s => s.status === 'cancelled').length,
+      today: sales.filter(s => {
+        const today = new Date().toDateString();
+        const saleDate = new Date(s.createdAt).toDateString();
+        return today === saleDate;
+      }).length,
+      thisWeek: sales.filter(s => {
+        const now = new Date();
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const saleDate = new Date(s.createdAt);
+        return saleDate >= weekAgo;
+      }).length,
+      thisMonth: sales.filter(s => {
+        const now = new Date();
+        const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+        const saleDate = new Date(s.createdAt);
+        return saleDate >= monthAgo;
+      }).length,
+      averageSale: sales.length > 0 ? sales.reduce((sum, sale) => sum + sale.totalAmount, 0) / sales.length : 0
+    };
+
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('❌ Errore statistiche vendite:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
 // Avvia il server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

@@ -4,608 +4,478 @@ import axios from 'axios';
 const KYCManager = () => {
   const [kycRequests, setKycRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedKYC, setSelectedKYC] = useState(null);
-  const [showViewModal, setShowViewModal] = useState(false);
-  const [showApproveModal, setShowApproveModal] = useState(false);
-  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('submittedAt');
   const [sortOrder, setSortOrder] = useState('desc');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [selectedKYC, setSelectedKYC] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [stats, setStats] = useState(null);
   const [message, setMessage] = useState({ type: '', text: '' });
-  const [showFilters, setShowFilters] = useState(false);
-
-  const getHeaders = () => {
-    const token = localStorage.getItem('token');
-    return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    };
-  };
 
   useEffect(() => {
     loadKYCRequests();
+    loadStats();
   }, []);
 
   const loadKYCRequests = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/api/admin/kyc/requests', { headers: getHeaders() });
-      if (response.data.success) {
-        setKycRequests(response.data.data.requests);
-      }
-    } catch (error) {
-      console.error('Errore caricamento KYC:', error);
-      setMessage({ type: 'error', text: 'Errore nel caricamento delle richieste KYC' });
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:3000/api/admin/kyc', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setKycRequests(response.data.data);
+    } catch (err) {
+      console.error('Errore caricamento KYC:', err);
+      setError('Errore nel caricamento delle richieste KYC');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApproveKYC = async () => {
+  const loadStats = async () => {
     try {
-      const response = await axios.post(`http://localhost:3000/api/admin/kyc/${selectedKYC.kycId}/status`, {
-        status: 'approved'
-      }, { headers: getHeaders() });
-      if (response.data.success) {
-        setShowApproveModal(false);
-        setSelectedKYC(null);
-        loadKYCRequests();
-        setMessage({ type: 'success', text: 'KYC approvato con successo!' });
-        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-      }
-    } catch (error) {
-      console.error('Errore approvazione KYC:', error);
-      setMessage({ type: 'error', text: error.response?.data?.error || 'Errore nell\'approvazione del KYC' });
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:3000/api/admin/kyc/stats', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setStats(response.data.data);
+    } catch (err) {
+      console.error('Errore caricamento statistiche KYC:', err);
     }
   };
 
-  const handleRejectKYC = async () => {
+  const handleStatusUpdate = async (kycId, newStatus, notes = '') => {
     try {
-      const response = await axios.post(`http://localhost:3000/api/admin/kyc/${selectedKYC.kycId}/status`, {
-        status: 'rejected',
-        reason: 'Documenti non conformi'
-      }, { headers: getHeaders() });
-      if (response.data.success) {
-        setShowRejectModal(false);
-        setSelectedKYC(null);
-        loadKYCRequests();
-        setMessage({ type: 'success', text: 'KYC rifiutato con successo!' });
-        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-      }
-    } catch (error) {
-      console.error('Errore rifiuto KYC:', error);
-      setMessage({ type: 'error', text: error.response?.data?.error || 'Errore nel rifiuto del KYC' });
+      setActionLoading(true);
+      const token = localStorage.getItem('token');
+      await axios.put(`http://localhost:3000/api/admin/kyc/${kycId}/status`, {
+        status: newStatus,
+        notes: notes
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      // Ricarica i dati
+      await loadKYCRequests();
+      await loadStats();
+      setShowModal(false);
+      setSelectedKYC(null);
+      
+      const statusText = {
+        'approved': 'Approvato',
+        'rejected': 'Rifiutato',
+        'pending': 'Rimesso in attesa',
+        'paused': 'Messo in pausa'
+      };
+      
+      setMessage({ 
+        type: 'success', 
+        text: `KYC ${statusText[newStatus]} con successo!` 
+      });
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    } catch (err) {
+      console.error('Errore aggiornamento stato KYC:', err);
+      setMessage({ 
+        type: 'error', 
+        text: 'Errore nell\'aggiornamento dello stato KYC' 
+      });
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  const handleViewKYC = (kyc) => {
-    setSelectedKYC(kyc);
-    setShowViewModal(true);
-  };
+  const handleDeleteKYC = async (kycId) => {
+    if (!confirm('Sei sicuro di voler eliminare questa richiesta KYC?')) {
+      return;
+    }
 
-  const handleApproveClick = (kyc) => {
-    setSelectedKYC(kyc);
-    setShowApproveModal(true);
-  };
-
-  const handleRejectClick = (kyc) => {
-    setSelectedKYC(kyc);
-    setShowRejectModal(true);
-  };
-
-  const getStatusLabel = (status) => {
-    const statuses = {
-      'pending': '⏳ In Attesa',
-      'approved': '✅ Approvato',
-      'rejected': '❌ Rifiutato'
-    };
-    return statuses[status] || status;
+    try {
+      setActionLoading(true);
+      const token = localStorage.getItem('token');
+      await axios.delete(`http://localhost:3000/api/admin/kyc/${kycId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      // Ricarica i dati
+      await loadKYCRequests();
+      await loadStats();
+      
+      setMessage({ 
+        type: 'success', 
+        text: 'Richiesta KYC eliminata con successo!' 
+      });
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    } catch (err) {
+      console.error('Errore eliminazione KYC:', err);
+      setMessage({ 
+        type: 'error', 
+        text: 'Errore nell\'eliminazione della richiesta KYC' 
+      });
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const getStatusColor = (status) => {
-    const colors = {
-      'pending': 'bg-yellow-100 text-yellow-800',
-      'approved': 'bg-green-100 text-green-800',
-      'rejected': 'bg-red-100 text-red-800'
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    switch (status) {
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'paused': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
-  // Filtri e ordinamento
-  const filteredKYC = kycRequests.filter(kyc => {
-    const matchesSearch = kyc.userInfo?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         kyc.userInfo?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         kyc.userInfo?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         kyc.kycId?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = filterStatus === 'all' || kyc.status === filterStatus;
-    
-    return matchesSearch && matchesStatus;
-  });
-
-  const sortedKYC = [...filteredKYC].sort((a, b) => {
-    let aValue = a[sortBy];
-    let bValue = b[sortBy];
-    
-    if (sortBy === 'submittedAt') {
-      aValue = new Date(a.submittedAt);
-      bValue = new Date(b.submittedAt);
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'approved': return 'Approvato';
+      case 'rejected': return 'Rifiutato';
+      case 'pending': return 'In Attesa';
+      case 'paused': return 'In Pausa';
+      default: return status;
     }
-    
-    if (sortOrder === 'asc') {
-      return aValue > bValue ? 1 : -1;
-    } else {
-      return aValue < bValue ? 1 : -1;
-    }
-  });
+  };
 
-  const totalPages = Math.ceil(sortedKYC.length / itemsPerPage);
-  const paginatedKYC = sortedKYC.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800">🔐 Gestione KYC</h2>
-          <p className="text-gray-600">Gestisci le richieste di verifica identità</p>
+  const getActionButtons = (kyc) => {
+    if (kyc.status === 'approved') {
+      return (
+        <div className="flex space-x-2">
+          <button
+            onClick={() => handleStatusUpdate(kyc.kycId, 'paused')}
+            disabled={actionLoading}
+            className="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50"
+          >
+            ⏸️ Pausa
+          </button>
+          <button
+            onClick={() => handleDeleteKYC(kyc.kycId)}
+            disabled={actionLoading}
+            className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+          >
+            🗑️ Elimina
+          </button>
         </div>
-        <div className="flex space-x-3">
-          <div className="bg-blue-50 px-4 py-2 rounded-lg">
-            <div className="text-sm text-blue-600">In Attesa</div>
-            <div className="text-xl font-bold text-blue-800">
-              {kycRequests.filter(k => k.status === 'pending').length}
-            </div>
-          </div>
-          <div className="bg-green-50 px-4 py-2 rounded-lg">
-            <div className="text-sm text-green-600">Approvati</div>
-            <div className="text-xl font-bold text-green-800">
-              {kycRequests.filter(k => k.status === 'approved').length}
-            </div>
+      );
+    } else if (kyc.status === 'rejected') {
+      return (
+        <div className="flex space-x-2">
+          <button
+            onClick={() => handleStatusUpdate(kyc.kycId, 'pending')}
+            disabled={actionLoading}
+            className="px-3 py-1 text-xs bg-yellow-500 text-white rounded hover:bg-yellow-600 disabled:opacity-50"
+          >
+            🔄 Riprova
+          </button>
+          <button
+            onClick={() => handleDeleteKYC(kyc.kycId)}
+            disabled={actionLoading}
+            className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+          >
+            🗑️ Elimina
+          </button>
+        </div>
+      );
+    } else if (kyc.status === 'pending') {
+      return (
+        <div className="flex space-x-2">
+          <button
+            onClick={() => handleStatusUpdate(kyc.kycId, 'approved')}
+            disabled={actionLoading}
+            className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+          >
+            ✅ Approva
+          </button>
+          <button
+            onClick={() => handleStatusUpdate(kyc.kycId, 'rejected')}
+            disabled={actionLoading}
+            className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+          >
+            ❌ Rifiuta
+          </button>
+          <button
+            onClick={() => handleStatusUpdate(kyc.kycId, 'paused')}
+            disabled={actionLoading}
+            className="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50"
+          >
+            ⏸️ Pausa
+          </button>
+        </div>
+      );
+    } else if (kyc.status === 'paused') {
+      return (
+        <div className="flex space-x-2">
+          <button
+            onClick={() => handleStatusUpdate(kyc.kycId, 'approved')}
+            disabled={actionLoading}
+            className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+          >
+            ✅ Approva
+          </button>
+          <button
+            onClick={() => handleStatusUpdate(kyc.kycId, 'rejected')}
+            disabled={actionLoading}
+            className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+          >
+            ❌ Rifiuta
+          </button>
+          <button
+            onClick={() => handleStatusUpdate(kyc.kycId, 'pending')}
+            disabled={actionLoading}
+            className="px-3 py-1 text-xs bg-yellow-500 text-white rounded hover:bg-yellow-600 disabled:opacity-50"
+          >
+            🔄 Ripendi
+          </button>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const filteredKYC = kycRequests
+    .filter(kyc => {
+      const matchesSearch = kyc.userInfo?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           kyc.userInfo?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           kyc.userInfo?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           kyc.kycId?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || kyc.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      let aValue, bValue;
+      
+      if (sortBy === 'submittedAt') {
+        aValue = new Date(a.submittedAt);
+        bValue = new Date(b.submittedAt);
+      } else if (sortBy === 'status') {
+        aValue = a.status;
+        bValue = b.status;
+      } else {
+        aValue = a[sortBy];
+        bValue = b[sortBy];
+      }
+      
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Caricamento richieste KYC...</p>
           </div>
         </div>
       </div>
+    );
+  }
 
-      {/* Message */}
-      {message.text && (
-        <div className={`mb-4 p-4 rounded-xl ${
-          message.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' :
-          message.type === 'error' ? 'bg-red-50 text-red-800 border border-red-200' : ''
-        }`}>
-          {message.text}
-        </div>
-      )}
-
-      {/* Filters and Search */}
-      <div className="bg-white rounded-2xl shadow-sm border p-6 mb-6">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Cerca KYC..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-              <span className="absolute left-3 top-3 text-gray-400">🔍</span>
-            </div>
-          </div>
-
-          {/* Filters */}
-          <div className="flex gap-3">
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <p className="text-red-600">{error}</p>
+            <button 
+              onClick={loadKYCRequests}
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
             >
-              <option value="all">Tutti gli stati</option>
-              <option value="pending">In Attesa</option>
-              <option value="approved">Approvato</option>
-              <option value="rejected">Rifiutato</option>
-            </select>
-
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="px-4 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
-            >
-              ⚙️ Filtri Avanzati
+              Riprova
             </button>
           </div>
         </div>
+      </div>
+    );
+  }
 
-        {/* Advanced Filters */}
-        {showFilters && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Ordina per</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                >
-                  <option value="createdAt">Data creazione</option>
-                  <option value="status">Stato</option>
-                  <option value="documentType">Tipo documento</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Ordine</label>
-                <select
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                >
-                  <option value="desc">Decrescente</option>
-                  <option value="asc">Crescente</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Risultati per pagina</label>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => setItemsPerPage(parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                >
-                  <option value={5}>5</option>
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                </select>
-              </div>
-            </div>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Messaggi */}
+        {message.text && (
+          <div className={`mb-6 p-4 rounded-lg ${
+            message.type === 'success' ? 'bg-green-50 border border-green-200 text-green-800' :
+            message.type === 'error' ? 'bg-red-50 border border-red-200 text-red-800' :
+            'bg-blue-50 border border-blue-200 text-blue-800'
+          }`}>
+            {message.text}
           </div>
         )}
-      </div>
 
-      {/* KYC Table */}
-      <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Caricamento KYC...</p>
+        {/* Header con Statistiche */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">🆔 Gestione KYC</h1>
+              <p className="text-gray-600 mt-2">Gestisci le richieste di verifica identità degli utenti</p>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-blue-600">{kycRequests.length}</div>
+              <div className="text-sm text-gray-500">Richieste Totali</div>
+            </div>
           </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Utente
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Tipo Documento
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Stato
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Data Richiesta
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Azioni
-                    </th>
+          
+          {stats && (
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
+                <div className="text-sm text-gray-600">Totali</div>
+              </div>
+              <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
+                <div className="text-sm text-gray-600">In Attesa</div>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">{stats.approved}</div>
+                <div className="text-sm text-gray-600">Approvati</div>
+              </div>
+              <div className="text-center p-4 bg-red-50 rounded-lg">
+                <div className="text-2xl font-bold text-red-600">{stats.rejected}</div>
+                <div className="text-sm text-gray-600">Rifiutati</div>
+              </div>
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <div className="text-2xl font-bold text-gray-600">{stats.paused}</div>
+                <div className="text-sm text-gray-600">In Pausa</div>
+              </div>
+              <div className="text-center p-4 bg-purple-50 rounded-lg">
+                <div className="text-2xl font-bold text-purple-600">{stats.today}</div>
+                <div className="text-sm text-gray-600">Oggi</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Filtri e Ricerca */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">🔍 Ricerca</label>
+              <input
+                type="text"
+                placeholder="Cerca per nome, email o ID KYC..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <div className="md:w-48">
+              <label className="block text-sm font-medium text-gray-700 mb-2">📊 Filtra Stato</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">Tutti gli Stati</option>
+                <option value="pending">In Attesa</option>
+                <option value="approved">Approvati</option>
+                <option value="rejected">Rifiutati</option>
+                <option value="paused">In Pausa</option>
+              </select>
+            </div>
+            <div className="md:w-48">
+              <label className="block text-sm font-medium text-gray-700 mb-2">📊 Ordina per</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="submittedAt">Data Invio</option>
+                <option value="status">Stato</option>
+                <option value="kycId">ID KYC</option>
+              </select>
+            </div>
+            <div className="md:w-32">
+              <label className="block text-sm font-medium text-gray-700 mb-2">📈 Ordine</label>
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="desc">Decrescente</option>
+                <option value="asc">Crescente</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabella KYC */}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Utente
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ID KYC
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Stato
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Data Invio
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Azioni
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredKYC.map((kyc) => (
+                  <tr key={kyc.kycId} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-400 to-purple-600 flex items-center justify-center text-white font-bold">
+                          {kyc.userInfo?.firstName?.charAt(0).toUpperCase() || 'U'}
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{kyc.userInfo?.firstName} {kyc.userInfo?.lastName}</div>
+                          <div className="text-sm text-gray-500">{kyc.userInfo?.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">
+                      {kyc.kycId}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(kyc.status)}`}>
+                        {getStatusText(kyc.status)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(kyc.submittedAt).toLocaleDateString('it-IT')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      {getActionButtons(kyc)}
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {paginatedKYC.map((kyc) => (
-                    <tr key={kyc.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
-                            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-400 to-purple-600 flex items-center justify-center text-white font-bold">
-                              {kyc.userInfo?.firstName?.charAt(0).toUpperCase() || 'U'}
-                            </div>
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{kyc.userInfo?.firstName} {kyc.userInfo?.lastName}</div>
-                            <div className="text-sm text-gray-500">{kyc.userInfo?.email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {kyc.documentType || 'Documento'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(kyc.status)}`}>
-                          {getStatusLabel(kyc.status)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(kyc.submittedAt).toLocaleDateString('it-IT')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleViewKYC(kyc)}
-                            className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
-                            title="Visualizza"
-                          >
-                            👁️
-                          </button>
-                          {kyc.status === 'pending' && (
-                            <>
-                              <button
-                                onClick={() => handleApproveClick(kyc)}
-                                className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
-                                title="Approva"
-                              >
-                                ✅
-                              </button>
-                              <button
-                                onClick={() => handleRejectClick(kyc)}
-                                className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
-                                title="Rifiuta"
-                              >
-                                ❌
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                <div className="flex-1 flex justify-between sm:hidden">
-                  <button
-                    onClick={() => setCurrentPage(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Precedente
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Successivo
-                  </button>
-                </div>
-                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm text-gray-700">
-                      Mostrando <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> a{' '}
-                      <span className="font-medium">{Math.min(currentPage * itemsPerPage, sortedKYC.length)}</span> di{' '}
-                      <span className="font-medium">{sortedKYC.length}</span> risultati
-                    </p>
-                  </div>
-                  <div>
-                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                            page === currentPage
-                              ? 'z-10 bg-purple-50 border-purple-500 text-purple-600'
-                              : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      ))}
-                    </nav>
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
+        {filteredKYC.length === 0 && (
+          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+            <div className="text-6xl mb-4">📭</div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Nessuna richiesta KYC trovata</h3>
+            <p className="text-gray-500">Non ci sono richieste KYC che corrispondono ai criteri di ricerca.</p>
+          </div>
         )}
       </div>
-
-      {/* View KYC Modal */}
-      {showViewModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">👁️ Dettagli KYC</h3>
-            {selectedKYC && (
-              <div className="space-y-6">
-                {/* Informazioni Utente */}
-                <div className="border-b border-gray-200 pb-4">
-                  <h4 className="text-md font-semibold text-gray-800 mb-3">👤 Informazioni Utente</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Nome Completo</label>
-                      <p className="text-sm text-gray-900">{selectedKYC.userInfo?.firstName} {selectedKYC.userInfo?.lastName}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Email</label>
-                      <p className="text-sm text-gray-900">{selectedKYC.userInfo?.email}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">KYC ID</label>
-                      <p className="text-sm text-gray-900">{selectedKYC.kycId}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Stato</label>
-                      <p className="text-sm text-gray-900">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedKYC.status)}`}>
-                          {getStatusLabel(selectedKYC.status)}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Dati Anagrafici */}
-                <div className="border-b border-gray-200 pb-4">
-                  <h4 className="text-md font-semibold text-gray-800 mb-3">📋 Dati Anagrafici</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Data di Nascita</label>
-                      <p className="text-sm text-gray-900">{selectedKYC.userData?.birthDate}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Cittadinanza</label>
-                      <p className="text-sm text-gray-900">{selectedKYC.userData?.citizenship}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">Indirizzo</label>
-                      <p className="text-sm text-gray-900">{selectedKYC.userData?.address}, {selectedKYC.userData?.city}, {selectedKYC.userData?.country}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Dati Fiscali e Bancari */}
-                <div className="border-b border-gray-200 pb-4">
-                  <h4 className="text-md font-semibold text-gray-800 mb-3">💳 Dati Fiscali e Bancari</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Tipo Soggetto</label>
-                      <p className="text-sm text-gray-900">{selectedKYC.financialData?.isCompany ? 'Azienda' : 'Privato'}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">IBAN</label>
-                      <p className="text-sm text-gray-900">{selectedKYC.financialData?.iban}</p>
-                    </div>
-                    {!selectedKYC.financialData?.isCompany && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Codice Fiscale</label>
-                        <p className="text-sm text-gray-900">{selectedKYC.financialData?.fiscalCode}</p>
-                      </div>
-                    )}
-                    {selectedKYC.financialData?.isCompany && (
-                      <>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Nome Azienda</label>
-                          <p className="text-sm text-gray-900">{selectedKYC.financialData?.companyName}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Partita IVA</label>
-                          <p className="text-sm text-gray-900">{selectedKYC.financialData?.vatNumber}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Codice SDI</label>
-                          <p className="text-sm text-gray-900">{selectedKYC.financialData?.sdiCode}</p>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Documenti */}
-                <div className="border-b border-gray-200 pb-4">
-                  <h4 className="text-md font-semibold text-gray-800 mb-3">📄 Documenti Caricati</h4>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Fronte Documento</label>
-                      <p className="text-sm text-gray-900">{selectedKYC.documents?.idFront}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Retro Documento</label>
-                      <p className="text-sm text-gray-900">{selectedKYC.documents?.idBack}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Selfie</label>
-                      <p className="text-sm text-gray-900">{selectedKYC.documents?.selfie}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Note e Date */}
-                <div className="space-y-4">
-                  {selectedKYC.notes && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Note</label>
-                      <p className="text-sm text-gray-900">{selectedKYC.notes}</p>
-                    </div>
-                  )}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Data Richiesta</label>
-                      <p className="text-sm text-gray-900">{new Date(selectedKYC.submittedAt).toLocaleString('it-IT')}</p>
-                    </div>
-                    {selectedKYC.processedAt && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Data Processamento</label>
-                        <p className="text-sm text-gray-900">{new Date(selectedKYC.processedAt).toLocaleString('it-IT')}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="pt-4">
-                  <button
-                    onClick={() => setShowViewModal(false)}
-                    className="w-full px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
-                  >
-                    Chiudi
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Approve Confirmation Modal */}
-      {showApproveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">✅ Conferma Approvazione</h3>
-            <p className="text-gray-600 mb-6">
-              Sei sicuro di voler approvare il KYC di <strong>{selectedKYC?.user?.username}</strong>? 
-              Questa azione non può essere annullata.
-            </p>
-            <div className="flex space-x-3">
-              <button
-                onClick={handleApproveKYC}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Approva
-              </button>
-              <button
-                onClick={() => setShowApproveModal(false)}
-                className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
-              >
-                Annulla
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Reject Confirmation Modal */}
-      {showRejectModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">❌ Conferma Rifiuto</h3>
-            <p className="text-gray-600 mb-6">
-              Sei sicuro di voler rifiutare il KYC di <strong>{selectedKYC?.user?.username}</strong>? 
-              Questa azione non può essere annullata.
-            </p>
-            <div className="flex space-x-3">
-              <button
-                onClick={handleRejectKYC}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Rifiuta
-              </button>
-              <button
-                onClick={() => setShowRejectModal(false)}
-                className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
-              >
-                Annulla
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
