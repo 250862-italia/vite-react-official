@@ -25,7 +25,8 @@
   "author": "250862-italia",
   "license": "MIT",
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "vercel": "^44.6.4"
   },
   "workspaces": [
     "frontend",

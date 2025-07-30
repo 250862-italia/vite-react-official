@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { getApiUrl } from '../config/api';
 
 function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -34,8 +35,8 @@ function Login() {
     setSuccess('');
 
     try {
-      const endpoint = isRegistering ? '/api/auth/register' : '/api/auth/login';
-      const response = await axios.post(endpoint, formData);
+      const endpoint = isRegistering ? '/auth/register' : '/auth/login';
+      const response = await axios.post(getApiUrl(endpoint), formData);
       
       if (response.data.success) {
         localStorage.setItem('token', response.data.data.token);
