@@ -60,20 +60,20 @@ const CommissionManager = () => {
       };
 
       // Carica commissioni
-      const commissionsResponse = await axios.get('http://localhost:3000/api/admin/commissions', { headers });
+      const commissionsResponse = await axios.get(getApiUrl('/admin/commissions')), { headers });
       if (commissionsResponse.data.success) {
         setCommissions(commissionsResponse.data.data.commissions || []);
         setStats(commissionsResponse.data.data.stats || {});
       }
 
       // Carica vendite
-      const salesResponse = await axios.get('http://localhost:3000/api/admin/sales', { headers });
+      const salesResponse = await axios.get(getApiUrl('/admin/sales')), { headers });
       if (salesResponse.data.success) {
         setSales(salesResponse.data.data.sales || []);
       }
 
       // Carica utenti
-      const usersResponse = await axios.get('http://localhost:3000/api/admin/users', { headers });
+      const usersResponse = await axios.get(getApiUrl('/admin/users')), { headers });
       if (usersResponse.data.success) {
         setUsers(usersResponse.data.data || []);
       }

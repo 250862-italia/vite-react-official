@@ -14,7 +14,7 @@ const SurveyPlayer = ({ task, onComplete }) => {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const response = await axios.get(`http://localhost:3000/api/tasks/${task.id}/survey`, {
+        const response = await axios.get(getApiUrl(`/tasks/${task.id}/survey`)), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -64,7 +64,7 @@ const SurveyPlayer = ({ task, onComplete }) => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(`http://localhost:3000/api/tasks/${task.id}/survey/submit`, {
+      const response = await axios.post(getApiUrl(`/tasks/${task.id}/survey/submit`)), {
         answers
       }, {
         headers: {

@@ -50,7 +50,7 @@ function AdminDashboard() {
   const loadAdminStats = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3000/api/admin/stats', {
+      const response = await axios.get(getApiUrl('/admin/stats')), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -65,7 +65,7 @@ function AdminDashboard() {
   const loadNotifications = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3000/api/admin/notifications', {
+      const response = await axios.get(getApiUrl('/admin/notifications')), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       

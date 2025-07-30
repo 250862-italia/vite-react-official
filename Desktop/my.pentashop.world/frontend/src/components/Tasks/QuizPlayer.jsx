@@ -16,7 +16,7 @@ const QuizPlayer = ({ task, onComplete }) => {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const response = await axios.get(`http://localhost:3000/api/tasks/${task.id}/quiz`, {
+        const response = await axios.get(getApiUrl(`/tasks/${task.id}/quiz`)), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -65,7 +65,7 @@ const QuizPlayer = ({ task, onComplete }) => {
   const handleComplete = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(`http://localhost:3000/api/tasks/${task.id}/quiz/validate`, {
+      const response = await axios.post(getApiUrl(`/tasks/${task.id}/quiz/validate`)), {
         answers
       }, {
         headers: {

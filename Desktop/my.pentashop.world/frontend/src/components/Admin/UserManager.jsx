@@ -58,7 +58,7 @@ const UserManager = () => {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/api/admin/users', { headers: getHeaders() });
+      const response = await axios.get(getApiUrl('/admin/users')), { headers: getHeaders() });
       if (response.data.success) {
         setUsers(response.data.data);
       }
@@ -73,7 +73,7 @@ const UserManager = () => {
   const handleCreateUser = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:3000/api/admin/users', formData, { headers: getHeaders() });
+      const response = await axios.post(getApiUrl('/admin/users')), formData, { headers: getHeaders() });
       if (response.data.success) {
         setShowCreateModal(false);
         resetForm();
@@ -90,7 +90,7 @@ const UserManager = () => {
   const handleUpdateUser = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.put(`http://localhost:3000/api/admin/users/${selectedUser.id}`, formData, { headers: getHeaders() });
+      const response = await axios.put(getApiUrl(`/admin/users/${selectedUser.id}`)), formData, { headers: getHeaders() });
       if (response.data.success) {
         setShowEditModal(false);
         setSelectedUser(null);
@@ -106,7 +106,7 @@ const UserManager = () => {
 
   const handleDeleteUser = async () => {
     try {
-      const response = await axios.delete(`http://localhost:3000/api/admin/users/${selectedUser.id}`, { headers: getHeaders() });
+      const response = await axios.delete(getApiUrl(`/admin/users/${selectedUser.id}`)), { headers: getHeaders() });
       if (response.data.success) {
         setShowDeleteModal(false);
         setSelectedUser(null);
@@ -151,7 +151,7 @@ const UserManager = () => {
   const loadUserPackages = async (userId) => {
     try {
       setPackagesLoading(true);
-      const response = await axios.get(`http://localhost:3000/api/packages/purchased/${userId}`, { 
+      const response = await axios.get(getApiUrl(`/packages/purchased/${userId}`)), { 
         headers: getHeaders() 
       });
       if (response.data.success) {
@@ -182,7 +182,7 @@ const UserManager = () => {
 
   const confirmAuthorizeUser = async () => {
     try {
-      const response = await axios.put(`http://localhost:3000/api/admin/users/${selectedUser.id}/authorize`, {}, { 
+      const response = await axios.put(getApiUrl(`/admin/users/${selectedUser.id}/authorize`)), {}, { 
         headers: getHeaders() 
       });
       if (response.data.success) {
@@ -200,7 +200,7 @@ const UserManager = () => {
 
   const confirmSuspendUser = async () => {
     try {
-      const response = await axios.put(`http://localhost:3000/api/admin/users/${selectedUser.id}/suspend`, {}, { 
+      const response = await axios.put(getApiUrl(`/admin/users/${selectedUser.id}/suspend`)), {}, { 
         headers: getHeaders() 
       });
       if (response.data.success) {

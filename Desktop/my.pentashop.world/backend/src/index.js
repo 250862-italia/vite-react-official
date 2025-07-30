@@ -1724,6 +1724,85 @@ app.get('/api/admin/sales/stats', verifyToken, (req, res) => {
   }
 });
 
+// API - Lista utenti (Admin)
+app.get('/api/admin/users', verifyToken, (req, res) => {
+  try {
+    // Verifica che l'utente sia admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Accesso negato. Solo gli amministratori possono accedere alla lista utenti.'
+      });
+    }
+
+    const users = loadUsersFromFile();
+    
+    // Rimuovi le password per sicurezza
+    const safeUsers = users.map(user => {
+      const { password, ...safeUser } = user;
+      return safeUser;
+    });
+
+    res.json({
+      success: true,
+      data: safeUsers
+    });
+  } catch (error) {
+    console.error('❌ Errore lista utenti:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
+// API - Lista task (Admin)
+app.get('/api/admin/tasks', verifyToken, (req, res) => {
+  try {
+    // Verifica che l'utente sia admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Accesso negato. Solo gli amministratori possono accedere alla lista task.'
+      });
+    }
+
+    const tasks = loadTasksFromFile();
+
+    res.json({
+      success: true,
+      data: tasks
+    });
+  } catch (error) {
+    console.error('❌ Errore lista task:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
+// API - Lista task pubblica
+app.get('/api/tasks', (req, res) => {
+  try {
+    const tasks = loadTasksFromFile();
+    
+    // Filtra solo i task attivi
+    const activeTasks = tasks.filter(task => task.isActive);
+
+    res.json({
+      success: true,
+      data: activeTasks
+    });
+  } catch (error) {
+    console.error('❌ Errore lista task pubblica:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore interno del server'
+    });
+  }
+});
+
 // Avvia il server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

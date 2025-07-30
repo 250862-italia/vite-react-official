@@ -24,7 +24,7 @@ const KYCManager = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3000/api/admin/kyc', {
+      const response = await axios.get(getApiUrl('/admin/kyc')), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       setKycRequests(response.data.data);
@@ -39,7 +39,7 @@ const KYCManager = () => {
   const loadStats = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3000/api/admin/kyc/stats', {
+      const response = await axios.get(getApiUrl('/admin/kyc/stats')), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       setStats(response.data.data);
@@ -52,7 +52,7 @@ const KYCManager = () => {
     try {
       setActionLoading(true);
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:3000/api/admin/kyc/${kycId}/status`, {
+      await axios.put(getApiUrl(`/admin/kyc/${kycId}/status`)), {
         status: newStatus,
         notes: notes
       }, {
@@ -97,7 +97,7 @@ const KYCManager = () => {
     try {
       setActionLoading(true);
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:3000/api/admin/kyc/${kycId}`, {
+      await axios.delete(getApiUrl(`/admin/kyc/${kycId}`)), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       

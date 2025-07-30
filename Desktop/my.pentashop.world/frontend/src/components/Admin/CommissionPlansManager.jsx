@@ -31,7 +31,7 @@ function CommissionPlansManager() {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3000/api/admin/commission-plans', {
+      const response = await axios.get(getApiUrl('/admin/commission-plans')), {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -79,7 +79,7 @@ function CommissionPlansManager() {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:3000/api/admin/commission-plans', formData, {
+      await axios.post(getApiUrl('/admin/commission-plans')), formData, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -98,7 +98,7 @@ function CommissionPlansManager() {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:3000/api/admin/commission-plans/${editingPlan.id}`, formData, {
+      await axios.put(getApiUrl(`/admin/commission-plans/${editingPlan.id}`)), formData, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -120,7 +120,7 @@ function CommissionPlansManager() {
     
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:3000/api/admin/commission-plans/${planId}`, {
+      await axios.delete(getApiUrl(`/admin/commission-plans/${planId}`)), {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

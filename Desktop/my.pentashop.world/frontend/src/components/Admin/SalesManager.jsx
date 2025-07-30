@@ -38,7 +38,7 @@ const SalesManager = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3000/api/admin/sales', {
+      const response = await axios.get(getApiUrl('/admin/sales')), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       setSales(response.data.data);
@@ -53,7 +53,7 @@ const SalesManager = () => {
   const loadStats = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3000/api/admin/sales/stats', {
+      const response = await axios.get(getApiUrl('/admin/sales/stats')), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       setStats(response.data.data);
@@ -65,7 +65,7 @@ const SalesManager = () => {
   const loadAmbassadors = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3000/api/admin/users', {
+      const response = await axios.get(getApiUrl('/admin/users')), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const ambassadorUsers = response.data.data.filter(user => user.role === 'ambassador');
@@ -87,7 +87,7 @@ const SalesManager = () => {
         totalAmount: total
       };
 
-      await axios.post('http://localhost:3000/api/admin/sales', saleData, {
+      await axios.post(getApiUrl('/admin/sales')), saleData, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -126,7 +126,7 @@ const SalesManager = () => {
     try {
       setActionLoading(true);
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:3000/api/admin/sales/${saleId}`, updatedData, {
+      await axios.put(getApiUrl(`/admin/sales/${saleId}`)), updatedData, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -160,7 +160,7 @@ const SalesManager = () => {
     try {
       setActionLoading(true);
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:3000/api/admin/sales/${saleId}`, {
+      await axios.delete(getApiUrl(`/admin/sales/${saleId}`)), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       

@@ -15,7 +15,7 @@ const DocumentReader = ({ task, onComplete }) => {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const response = await axios.get(`http://localhost:3000/api/tasks/${task.id}/document`, {
+        const response = await axios.get(getApiUrl(`/tasks/${task.id}/document`)), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -56,7 +56,7 @@ const DocumentReader = ({ task, onComplete }) => {
   const handleComplete = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(`http://localhost:3000/api/tasks/${task.id}/document/complete`, {
+      const response = await axios.post(getApiUrl(`/tasks/${task.id}/document/complete`)), {
         readTime
       }, {
         headers: {

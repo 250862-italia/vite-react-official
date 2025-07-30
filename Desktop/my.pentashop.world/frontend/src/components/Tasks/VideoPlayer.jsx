@@ -17,7 +17,7 @@ const VideoPlayer = ({ task, onComplete }) => {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const response = await axios.get(`http://localhost:3000/api/tasks/${task.id}/video`, {
+        const response = await axios.get(getApiUrl(`/tasks/${task.id}/video`)), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -62,7 +62,7 @@ const VideoPlayer = ({ task, onComplete }) => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(`http://localhost:3000/api/tasks/${task.id}/video/complete`, {
+      const response = await axios.post(getApiUrl(`/tasks/${task.id}/video/complete`)), {
         watchedDuration: currentTime,
         totalDuration: duration
       }, {

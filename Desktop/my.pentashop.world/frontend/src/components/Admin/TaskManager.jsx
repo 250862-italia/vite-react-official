@@ -52,7 +52,7 @@ const TaskManager = () => {
   const loadTasks = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/api/admin/tasks', { headers: getHeaders() });
+      const response = await axios.get(getApiUrl('/admin/tasks')), { headers: getHeaders() });
       if (response.data.success) {
         setTasks(response.data.data);
       }
@@ -67,7 +67,7 @@ const TaskManager = () => {
   const handleCreateTask = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:3000/api/admin/tasks', formData, { headers: getHeaders() });
+      const response = await axios.post(getApiUrl('/admin/tasks')), formData, { headers: getHeaders() });
       if (response.data.success) {
         setShowCreateModal(false);
         resetForm();
@@ -84,7 +84,7 @@ const TaskManager = () => {
   const handleUpdateTask = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.put(`http://localhost:3000/api/admin/tasks/${selectedTask.id}`, formData, { headers: getHeaders() });
+      const response = await axios.put(getApiUrl(`/admin/tasks/${selectedTask.id}`)), formData, { headers: getHeaders() });
       if (response.data.success) {
         setShowEditModal(false);
         setSelectedTask(null);
@@ -100,7 +100,7 @@ const TaskManager = () => {
 
   const handleDeleteTask = async () => {
     try {
-      const response = await axios.delete(`http://localhost:3000/api/admin/tasks/${selectedTask.id}`, { headers: getHeaders() });
+      const response = await axios.delete(getApiUrl(`/admin/tasks/${selectedTask.id}`)), { headers: getHeaders() });
       if (response.data.success) {
         setShowDeleteModal(false);
         setSelectedTask(null);

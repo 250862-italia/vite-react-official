@@ -21,16 +21,16 @@ const UserProfile = () => {
       const token = localStorage.getItem('token');
       
       const [profileRes, statsRes, walletRes, badgesRes] = await Promise.all([
-        axios.get('http://localhost:3000/api/profile', {
+        axios.get(getApiUrl('/profile'), {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        axios.get('http://localhost:3000/api/profile/stats', {
+        axios.get(getApiUrl('/profile/stats'), {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        axios.get('http://localhost:3000/api/profile/wallet', {
+        axios.get(getApiUrl('/profile/wallet'), {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        axios.get('http://localhost:3000/api/profile/badges', {
+        axios.get(getApiUrl('/profile/badges'), {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
@@ -74,7 +74,7 @@ const UserProfile = () => {
   const handleSave = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.put('http://localhost:3000/api/profile', editForm, {
+      const response = await axios.put(getApiUrl('/profile'), editForm, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

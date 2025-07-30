@@ -15,7 +15,7 @@ const TaskExecutor = ({ task, onComplete, onClose }) => {
 
     try {
       // Simula l'invio al backend
-      const response = await axios.post(`http://localhost:3000/api/onboarding/tasks/${completedTask.id}/complete`, {
+      const response = await axios.post(getApiUrl(`/onboarding/tasks/${completedTask.id}/complete`)), {
         taskId: completedTask.id,
         completedAt: new Date().toISOString()
       });
