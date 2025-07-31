@@ -2,7 +2,7 @@
 const API_CONFIG = {
   // URL base per le API
   baseURL: process.env.NODE_ENV === 'production' 
-    ? 'https://mypentashopworld-iwnln4d5s-250862-italias-projects.vercel.app/api'  // URL di produzione
+    ? 'https://your-backend-url.com/api'  // TODO: Sostituire con URL backend deployato
     : 'http://localhost:3001/api',                  // URL di sviluppo
   
   // Timeout per le richieste
