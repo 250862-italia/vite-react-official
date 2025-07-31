@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Sistema Status</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .loading { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Sistema Status</h1>
+    
+    <div id="status-container">
+        <div class="status loading">Caricamento test...</div>
+    </div>
+    
+    <div>
+        <button class="btn-primary" onclick="testBackend()">Test Backend</button>
+        <button class="btn-primary" onclick="testFrontend()">Test Frontend</button>
+        <button class="btn-success" onclick="testLogin()">Test Login</button>
+    </div>
+
+    <script>
+        async function testBackend() {
+            try {
+                const response = await fetch('http://localhost:3001/health');
+                const data = await response.json();
+                updateStatus('Backend', true, `✅ Backend OK - ${data.status}`);
+            } catch (error) {
+                updateStatus('Backend', false, `❌ Backend Error: ${error.message}`);
+            }
+        }
+
+        async function testFrontend() {
+            try {
+                const response = await fetch('http://localhost:5173');
+                if (response.ok) {
+                    updateStatus('Frontend', true, '✅ Frontend OK');
+                } else {
+                    updateStatus('Frontend', false, `❌ Frontend Error: ${response.status}`);
+                }
+            } catch (error) {
+                updateStatus('Frontend', false, `❌ Frontend Error: ${error.message}`);
+            }
+        }
+
+        async function testLogin() {
+            try {
+                const response = await fetch('http://localhost:3001/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'admin', password: 'password' })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    updateStatus('Login', true, '✅ Login OK - Admin autenticato');
+                } else {
+                    updateStatus('Login', false, '❌ Login Failed');
+                }
+            } catch (error) {
+                updateStatus('Login', false, `❌ Login Error: ${error.message}`);
+            }
+        }
+
+        function updateStatus(test, success, message) {
+            const container = document.getElementById('status-container');
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status ${success ? 'success' : 'error'}`;
+            statusDiv.innerHTML = `<strong>${test}:</strong> ${message}`;
+            container.appendChild(statusDiv);
+        }
+
+        // Auto-test all
+        window.onload = function() {
+            setTimeout(() => {
+                testBackend();
+                setTimeout(() => testFrontend(), 1000);
+                setTimeout(() => testLogin(), 2000);
+            }, 500);
+        };
+    </script>
+</body>
+</html> 

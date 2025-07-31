@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Admin Dashboard Fix</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .container { max-width: 800px; margin: 0 auto; background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; backdrop-filter: blur(10px); }
+        .status { padding: 15px; margin: 15px 0; border-radius: 8px; font-weight: bold; }
+        .success { background-color: rgba(40, 167, 69, 0.8); }
+        .error { background-color: rgba(220, 53, 69, 0.8); }
+        .loading { background-color: rgba(23, 162, 184, 0.8); }
+        button { padding: 12px 24px; margin: 10px 5px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        input { padding: 12px; margin: 10px 0; border: none; border-radius: 8px; width: 100%; font-size: 16px; }
+        .user-info { background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Test Admin Dashboard Fix</h1>
+        <p>Verifica che l'endpoint /api/auth/me funzioni correttamente</p>
+        
+        <div id="status" class="status loading">🔄 Test in corso...</div>
+        
+        <div id="login-form">
+            <h2>🔑 Login Admin</h2>
+            <input type="text" id="username" placeholder="Username" value="admin">
+            <input type="password" id="password" placeholder="Password" value="password">
+            <button class="btn-primary" onclick="testLogin()">🔐 Test Login</button>
+        </div>
+        
+        <div id="me-test" style="display: none;">
+            <h2>👤 Test /api/auth/me</h2>
+            <button class="btn-success" onclick="testMeEndpoint()">🧪 Test /api/auth/me</button>
+        </div>
+        
+        <div id="results"></div>
+        
+        <button class="btn-success" onclick="openAdmin()">🚀 Apri Admin Dashboard</button>
+    </div>
+
+    <script>
+        let currentToken = '';
+        
+        async function testLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const results = document.getElementById('results');
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentToken = data.data.token;
+                    results.innerHTML = `
+                        <div class="status success">✅ Login riuscito!</div>
+                        <div class="user-info">
+                            <strong>👤 Utente:</strong> ${data.data.user.username}<br>
+                            <strong>🔑 Ruolo:</strong> ${data.data.user.role}<br>
+                            <strong>🎫 Token:</strong> ${data.data.token.substring(0, 50)}...
+                        </div>
+                    `;
+                    document.getElementById('me-test').style.display = 'block';
+                } else {
+                    results.innerHTML = `
+                        <div class="status error">❌ Login fallito: ${data.error}</div>
+                    `;
+                }
+            } catch (error) {
+                results.innerHTML = `
+                    <div class="status error">❌ Errore login: ${error.message}</div>
+                `;
+            }
+        }
+        
+        async function testMeEndpoint() {
+            const results = document.getElementById('results');
+            
+            if (!currentToken) {
+                results.innerHTML = `
+                    <div class="status error">❌ Token non disponibile. Esegui prima il login.</div>
+                `;
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    results.innerHTML += `
+                        <div class="status success">✅ /api/auth/me funziona!</div>
+                        <div class="user-info">
+                            <strong>👤 Utente:</strong> ${data.data.username}<br>
+                            <strong>🔑 Ruolo:</strong> ${data.data.role}<br>
+                            <strong>📧 Email:</strong> ${data.data.email}<br>
+                            <strong>✅ Attivo:</strong> ${data.data.isActive ? 'Sì' : 'No'}<br>
+                            <strong>🕒 Ultimo login:</strong> ${data.data.lastLogin}
+                        </div>
+                        <div class="status success">🎉 Admin Dashboard dovrebbe funzionare ora!</div>
+                    `;
+                } else {
+                    results.innerHTML += `
+                        <div class="status error">❌ /api/auth/me fallito: ${data.error}</div>
+                    `;
+                }
+            } catch (error) {
+                results.innerHTML += `
+                    <div class="status error">❌ Errore /api/auth/me: ${error.message}</div>
+                `;
+            }
+        }
+        
+        function openAdmin() {
+            window.open('http://localhost:5173', '_blank');
+        }
+        
+        // Test automatico all'avvio
+        testLogin();
+    </script>
+</body>
+</html> 

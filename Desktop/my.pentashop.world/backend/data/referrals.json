@@ -1,1 +1,23 @@
-[]
+[
+  {
+    "userId": 3,
+    "status": "active",
+    "commissionEarned": 7.50,
+    "lastActivity": "2025-01-15T14:30:00Z",
+    "notes": "Utente molto attivo, ottime performance"
+  },
+  {
+    "userId": 4,
+    "status": "active",
+    "commissionEarned": 2.40,
+    "lastActivity": "2025-01-14T11:20:00Z",
+    "notes": "Nuovo utente, potenziale promettente"
+  },
+  {
+    "userId": 5,
+    "status": "inactive",
+    "commissionEarned": 0.00,
+    "lastActivity": "2025-01-10T16:45:00Z",
+    "notes": "Utente inattivo da alcuni giorni"
+  }
+]

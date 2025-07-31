@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { getApiUrl } from '../../config/api';
 
 const Header = ({ user, onLogout }) => {
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    setShowUserMenu(false);
     onLogout();
   };
 
@@ -19,11 +21,50 @@ const Header = ({ user, onLogout }) => {
 
   const getRoleDisplayName = () => {
     if (user.role === 'admin') return 'Amministratore';
-    if (user.role === 'entry_ambassador') return 'Ambassador';
-    if (user.role === 'senior_ambassador') return 'Senior Ambassador';
-    if (user.role === 'executive_ambassador') return 'Executive Ambassador';
-    return user.role?.replace('_', ' ') || 'Utente';
+    
+    if (!user.purchasedPackages || user.purchasedPackages.length === 0) {
+      return 'Ambasciatore Base';
+    }
+
+    // Mappa dei pacchetti ai ruoli specifici
+    const packageRoles = {
+      1: 'WTW Ambassador',
+      2: 'MLM Ambassador', 
+      3: 'Pentagame Ambassador'
+    };
+
+    // Trova il pacchetto più alto (ID più alto = pacchetto più avanzato)
+    const highestPackage = user.purchasedPackages.reduce((highest, current) => {
+      return current.packageId > highest.packageId ? current : highest;
+    });
+
+    return packageRoles[highestPackage.packageId] || 'Ambasciatore';
   };
+
+  const getHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+  };
+
+  const loadNotifications = async () => {
+    try {
+      const response = await axios.get(getApiUrl('/notifications'), { headers: getHeaders() });
+      if (response.data.success) {
+        setNotifications(response.data.data);
+      }
+    } catch (error) {
+      console.error('Errore caricamento notifiche:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (user && user.id) {
+      loadNotifications();
+    }
+  }, [user]);
 
   return (
     <header className="bg-white/95 backdrop-blur-md shadow-lg border-b border-neutral-200 sticky top-0 z-50">
@@ -32,11 +73,11 @@ const Header = ({ user, onLogout }) => {
           {/* Logo and Brand */}
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-glow">
-              <span className="text-white font-bold text-2xl">🌊</span>
+              <span className="text-white font-bold text-2xl">🛍️</span>
             </div>
             <div>
               <h1 className="text-xl font-bold gradient-text">
-                Wash The World
+                MY.PENTASHOP.WORLD
               </h1>
               <p className="text-xs text-neutral-500">
                 Piattaforma Gamificata
@@ -47,6 +88,63 @@ const Header = ({ user, onLogout }) => {
           {/* User Info and Actions */}
           {user && (
             <div className="flex items-center space-x-4">
+              {/* Logout Button - Always Visible */}
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors duration-200 font-medium shadow-sm z-50"
+              >
+                <span>🚪</span>
+                <span className="hidden md:block">Logout</span>
+              </button>
+              {/* Notifications Bell */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative p-2 rounded-lg hover:bg-neutral-100 transition-colors duration-200"
+                >
+                  <span className="text-xl">🔔</span>
+                  {notifications.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {notifications.length}
+                    </span>
+                  )}
+                </button>
+
+                {/* Notifications Dropdown */}
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-neutral-200 py-2 animate-fade-in z-50">
+                    <div className="px-4 py-2 border-b border-neutral-200">
+                      <h3 className="font-semibold text-neutral-800">Notifiche</h3>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {notifications.length > 0 ? (
+                        notifications.map((notification) => (
+                          <div key={notification.id} className="px-4 py-3 hover:bg-neutral-50 border-b border-neutral-100 last:border-b-0">
+                            <div className="flex items-start space-x-3">
+                              <div className={`w-2 h-2 rounded-full mt-2 ${
+                                notification.priority === 'high' ? 'bg-red-500' : 
+                                notification.type === 'success' ? 'bg-green-500' : 'bg-blue-500'
+                              }`}></div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-neutral-800">{notification.title}</p>
+                                <p className="text-xs text-neutral-600 mt-1">{notification.message}</p>
+                                <p className="text-xs text-neutral-400 mt-1">
+                                  {new Date(notification.createdAt).toLocaleString('it-IT')}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-8 text-center text-neutral-500">
+                          <p>Nessuna notifica</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Quick Stats */}
               <div className="hidden md:flex items-center space-x-3">
                 <div className="flex items-center space-x-1 px-3 py-1.5 bg-blue-50 rounded-full">
@@ -63,139 +161,7 @@ const Header = ({ user, onLogout }) => {
                 </div>
               </div>
 
-              {/* User Menu */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-3 p-2 rounded-lg hover:bg-neutral-100 transition-colors duration-200"
-                >
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold text-sm">
-                      {user.firstName ? user.firstName.charAt(0).toUpperCase() : '👤'}
-                    </span>
-                  </div>
-                  <div className="hidden md:block text-left">
-                    <p className="text-sm font-medium text-neutral-800">
-                      {getUserDisplayName()}
-                    </p>
-                    <p className="text-xs text-neutral-500">
-                      {getRoleDisplayName()}
-                    </p>
-                  </div>
-                  <svg 
-                    className={`w-4 h-4 text-neutral-500 transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`}
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
 
-                {/* Dropdown Menu */}
-                {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-neutral-200 py-2 animate-fade-in">
-                    {/* User Info */}
-                    <div className="px-4 py-3 border-b border-neutral-200">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                          <span className="text-white font-semibold text-sm">
-                            {user.firstName ? user.firstName.charAt(0).toUpperCase() : '👤'}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-neutral-800">
-                            {getUserDisplayName()}
-                          </p>
-                          <p className="text-sm text-neutral-500">
-                            {getRoleDisplayName()}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Stats */}
-                    <div className="px-4 py-3 border-b border-neutral-200">
-                      <div className="grid grid-cols-3 gap-2 text-center">
-                        <div>
-                          <p className="text-xs text-neutral-500">Punti</p>
-                          <p className="text-lg font-bold text-blue-600">{user.points || 0}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-neutral-500">Token</p>
-                          <p className="text-lg font-bold text-green-600">{user.tokens || 0}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-neutral-500">Livello</p>
-                          <p className="text-lg font-bold text-purple-600">{user.level || 1}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Menu Items */}
-                    <div className="py-2">
-                      <button
-                        onClick={() => {
-                          setShowUserMenu(false);
-                          navigate('/dashboard');
-                        }}
-                        className="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50 flex items-center space-x-2"
-                      >
-                        <span>📊</span>
-                        <span>Dashboard</span>
-                      </button>
-                      
-                      {user.role === 'admin' && (
-                        <button
-                          onClick={() => {
-                            setShowUserMenu(false);
-                            navigate('/admin');
-                          }}
-                          className="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50 flex items-center space-x-2"
-                        >
-                          <span>⚙️</span>
-                          <span>Admin Panel</span>
-                        </button>
-                      )}
-                      
-                      {user.role !== 'admin' && (
-                        <button
-                          onClick={() => {
-                            setShowUserMenu(false);
-                            navigate('/mlm');
-                          }}
-                          className="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50 flex items-center space-x-2"
-                        >
-                          <span>🏢</span>
-                          <span>MLM Dashboard</span>
-                        </button>
-                      )}
-                      
-                      <button
-                        onClick={() => {
-                          setShowUserMenu(false);
-                          navigate('/profile');
-                        }}
-                        className="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50 flex items-center space-x-2"
-                      >
-                        <span>👤</span>
-                        <span>Profilo</span>
-                      </button>
-                    </div>
-
-                    {/* Logout */}
-                    <div className="border-t border-neutral-200 pt-2">
-                      <button
-                        onClick={handleLogout}
-                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
-                      >
-                        <span>🚪</span>
-                        <span>Logout</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
           )}
         </div>
@@ -223,6 +189,13 @@ const Header = ({ user, onLogout }) => {
                 {getRoleDisplayName()}
               </span>
             </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-1 px-2 py-1 bg-red-500 text-white rounded text-xs font-medium"
+            >
+              <span>🚪</span>
+              <span>Logout</span>
+            </button>
           </div>
         </div>
       )}

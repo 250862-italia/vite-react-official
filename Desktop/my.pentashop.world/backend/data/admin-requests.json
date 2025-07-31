@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "userId": 2,
+    "username": "Gianni 62",
+    "type": "commission_payment",
+    "status": "pending",
+    "amount": 92.17,
+    "description": "Richiesta pagamento commissioni",
+    "createdAt": "2025-07-30T10:00:00Z",
+    "processedAt": null,
+    "notes": "Commissioni totali per il mese di luglio"
+  },
+  {
+    "id": 2,
+    "userId": 2,
+    "username": "Gianni 62",
+    "type": "package_authorization",
+    "status": "approved",
+    "amount": 0,
+    "description": "Richiesta autorizzazione pacchetto WELCOME KIT MLM",
+    "createdAt": "2025-07-29T14:30:00Z",
+    "processedAt": "2025-07-29T15:00:00Z",
+    "notes": "Pacchetto autorizzato per tutti gli ambassador"
+  },
+  {
+    "id": 3,
+    "userId": 2,
+    "username": "Gianni 62",
+    "type": "kyc_verification",
+    "status": "completed",
+    "amount": 0,
+    "description": "Verifica documenti KYC",
+    "createdAt": "2025-07-25T10:00:00Z",
+    "processedAt": "2025-07-26T14:30:00Z",
+    "notes": "Documenti verificati e approvati"
+  }
+]

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getApiUrl } from '../../config/api';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -45,6 +46,22 @@ const CommissionManager = () => {
     totalOrders: 0,
     averageCommission: 0
   });
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedCommission, setSelectedCommission] = useState(null);
+  const [message, setMessage] = useState({ type: '', text: '' });
+
+  // Form states
+  const [commissionForm, setCommissionForm] = useState({
+    userId: '',
+    type: 'direct_sale',
+    amount: '',
+    commissionRate: '',
+    description: '',
+    status: 'pending',
+    level: 0,
+    plan: 'manual'
+  });
 
   useEffect(() => {
     loadData();
@@ -60,20 +77,40 @@ const CommissionManager = () => {
       };
 
       // Carica commissioni
-      const commissionsResponse = await axios.get(getApiUrl('/admin/commissions')), { headers });
+      const commissionsResponse = await axios.get(getApiUrl('/admin/commissions'), { headers });
       if (commissionsResponse.data.success) {
-        setCommissions(commissionsResponse.data.data.commissions || []);
-        setStats(commissionsResponse.data.data.stats || {});
+        setCommissions(commissionsResponse.data.data || []);
       }
 
       // Carica vendite
-      const salesResponse = await axios.get(getApiUrl('/admin/sales')), { headers });
+      const salesResponse = await axios.get(getApiUrl('/admin/sales'), { headers });
       if (salesResponse.data.success) {
-        setSales(salesResponse.data.data.sales || []);
+        setSales(salesResponse.data.data || []);
+      }
+
+      // Carica statistiche
+      const statsResponse = await axios.get(getApiUrl('/admin/sales/stats'), { headers });
+      if (statsResponse.data.success) {
+        const salesStats = statsResponse.data.data || {};
+        const commissions = commissionsResponse.data.data || [];
+        
+        const totalCommissions = commissions.reduce((sum, c) => sum + (c.commissionAmount || 0), 0);
+        const pendingCommissions = commissions.filter(c => c.status === 'pending').reduce((sum, c) => sum + (c.commissionAmount || 0), 0);
+        const paidCommissions = commissions.filter(c => c.status === 'paid').reduce((sum, c) => sum + (c.commissionAmount || 0), 0);
+        const averageCommission = commissions.length > 0 ? totalCommissions / commissions.length : 0;
+        
+        setStats({
+          totalCommissions,
+          pendingCommissions,
+          paidCommissions,
+          totalSales: salesStats.totalAmount || 0,
+          totalOrders: salesStats.total || 0,
+          averageCommission
+        });
       }
 
       // Carica utenti
-      const usersResponse = await axios.get(getApiUrl('/admin/users')), { headers });
+      const usersResponse = await axios.get(getApiUrl('/admin/users'), { headers });
       if (usersResponse.data.success) {
         setUsers(usersResponse.data.data || []);
       }
@@ -106,9 +143,9 @@ const CommissionManager = () => {
   const getFilteredSales = () => {
     return sales.filter(sale => {
       if (filters.status !== 'all' && sale.status !== filters.status) return false;
-      if (filters.userId !== 'all' && sale.userId !== parseInt(filters.userId)) return false;
-      if (filters.dateFrom && new Date(sale.date) < new Date(filters.dateFrom)) return false;
-      if (filters.dateTo && new Date(sale.date) > new Date(filters.dateTo)) return false;
+      if (filters.userId !== 'all' && sale.ambassadorId !== parseInt(filters.userId)) return false;
+      if (filters.dateFrom && new Date(sale.createdAt || sale.date) < new Date(filters.dateFrom)) return false;
+      if (filters.dateTo && new Date(sale.createdAt || sale.date) > new Date(filters.dateTo)) return false;
       return true;
     });
   };
@@ -173,6 +210,106 @@ const CommissionManager = () => {
     return csvRows.join('\n');
   };
 
+  // CRUD Functions
+  const handleCreateCommission = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
+      const response = await axios.post(getApiUrl('/admin/commissions'), commissionForm, { headers });
+      if (response.data.success) {
+        setShowCreateModal(false);
+        resetCommissionForm();
+        loadData();
+        setMessage({ type: 'success', text: 'Commissione creata con successo!' });
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      }
+    } catch (error) {
+      console.error('Errore creazione commissione:', error);
+      setMessage({ type: 'error', text: 'Errore nella creazione della commissione' });
+    }
+  };
+
+  const handleUpdateCommission = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
+      const response = await axios.put(getApiUrl(`/admin/commissions/${selectedCommission.id}`), commissionForm, { headers });
+      if (response.data.success) {
+        setShowEditModal(false);
+        setSelectedCommission(null);
+        resetCommissionForm();
+        loadData();
+        setMessage({ type: 'success', text: 'Commissione aggiornata con successo!' });
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      }
+    } catch (error) {
+      console.error('Errore aggiornamento commissione:', error);
+      setMessage({ type: 'error', text: 'Errore nell\'aggiornamento della commissione' });
+    }
+  };
+
+  const handleDeleteCommission = async (commissionId) => {
+    if (!window.confirm('Sei sicuro di voler eliminare questa commissione?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
+      const response = await axios.delete(getApiUrl(`/admin/commissions/${commissionId}`), { headers });
+      if (response.data.success) {
+        loadData();
+        setMessage({ type: 'success', text: 'Commissione eliminata con successo!' });
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      }
+    } catch (error) {
+      console.error('Errore eliminazione commissione:', error);
+      setMessage({ type: 'error', text: 'Errore nell\'eliminazione della commissione' });
+    }
+  };
+
+  const handleEditCommission = (commission) => {
+    setSelectedCommission(commission);
+    setCommissionForm({
+      userId: commission.userId.toString(),
+      type: commission.type,
+      amount: commission.amount.toString(),
+      commissionRate: commission.commissionRate.toString(),
+      description: commission.description,
+      status: commission.status,
+      level: commission.level,
+      plan: commission.plan
+    });
+    setShowEditModal(true);
+  };
+
+  const resetCommissionForm = () => {
+    setCommissionForm({
+      userId: '',
+      type: 'direct_sale',
+      amount: '',
+      commissionRate: '',
+      description: '',
+      status: 'pending',
+      level: 0,
+      plan: 'manual'
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -190,6 +327,13 @@ const CommissionManager = () => {
           <p className="text-gray-600">Monitora commissioni e vendite del sistema MLM</p>
         </div>
         <div className="flex space-x-2">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nuova Commissione</span>
+          </button>
           <button
             onClick={() => exportData(activeTab)}
             className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
@@ -209,7 +353,7 @@ const CommissionManager = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Commissioni Totali</p>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalCommissions)}</p>
+                              <p className="text-2xl font-bold text-gray-900">€{Math.round(stats.totalCommissions)}</p>
             </div>
           </div>
         </div>
@@ -393,6 +537,9 @@ const CommissionManager = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Stato
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Azioni
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -438,6 +585,24 @@ const CommissionManager = () => {
                           </span>
                         </span>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleEditCommission(commission)}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Modifica"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCommission(commission.id)}
+                            className="text-red-600 hover:text-red-900"
+                            title="Elimina"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -480,27 +645,27 @@ const CommissionManager = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {getUserName(sale.userId)}
+                            {sale.ambassadorInfo?.username || sale.ambassadorName || getUserName(sale.ambassadorId)}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {getUserEmail(sale.userId)}
+                            {sale.ambassadorInfo?.email || getUserEmail(sale.ambassadorId)}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {sale.product || sale.productName || 'Prodotto non specificato'}
+                        {sale.productName || sale.description || 'Prodotto non specificato'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatCurrency(sale.amount)}
+                        {formatCurrency(sale.totalAmount || sale.amount)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {formatCurrency(sale.commissionEarned)}
+                        {formatCurrency(sale.commissionAmount || sale.commission)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {sale.commissionRate ? (sale.commissionRate * 100).toFixed(1) + '%' : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(sale.date)}
+                        {formatDate(sale.createdAt || sale.date)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(sale.status)}`}>
@@ -536,6 +701,261 @@ const CommissionManager = () => {
           )}
         </div>
       </div>
+
+      {/* Modal Crea Commissione */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Crea Nuova Commissione</h3>
+            <form onSubmit={handleCreateCommission}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Utente
+                  </label>
+                  <select
+                    value={commissionForm.userId}
+                    onChange={(e) => setCommissionForm({...commissionForm, userId: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Seleziona utente</option>
+                    {users.map(user => (
+                      <option key={user.id} value={user.id}>
+                        {user.username} ({user.role})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tipo
+                  </label>
+                  <select
+                    value={commissionForm.type}
+                    onChange={(e) => setCommissionForm({...commissionForm, type: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="direct_sale">Vendita Diretta</option>
+                    <option value="upline_commission">Commissione Upline</option>
+                    <option value="bonus">Bonus</option>
+                    <option value="referral">Referral</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Importo Vendita
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={commissionForm.amount}
+                    onChange={(e) => setCommissionForm({...commissionForm, amount: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tasso Commissione (%)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={commissionForm.commissionRate}
+                    onChange={(e) => setCommissionForm({...commissionForm, commissionRate: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Descrizione
+                  </label>
+                  <textarea
+                    value={commissionForm.description}
+                    onChange={(e) => setCommissionForm({...commissionForm, description: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows="3"
+                    placeholder="Descrizione della commissione"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Stato
+                  </label>
+                  <select
+                    value={commissionForm.status}
+                    onChange={(e) => setCommissionForm({...commissionForm, status: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="pending">In Attesa</option>
+                    <option value="paid">Pagata</option>
+                    <option value="cancelled">Cancellata</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Annulla
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Crea Commissione
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Modifica Commissione */}
+      {showEditModal && selectedCommission && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Modifica Commissione</h3>
+            <form onSubmit={handleUpdateCommission}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Utente
+                  </label>
+                  <select
+                    value={commissionForm.userId}
+                    onChange={(e) => setCommissionForm({...commissionForm, userId: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Seleziona utente</option>
+                    {users.map(user => (
+                      <option key={user.id} value={user.id}>
+                        {user.username} ({user.role})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tipo
+                  </label>
+                  <select
+                    value={commissionForm.type}
+                    onChange={(e) => setCommissionForm({...commissionForm, type: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="direct_sale">Vendita Diretta</option>
+                    <option value="upline_commission">Commissione Upline</option>
+                    <option value="bonus">Bonus</option>
+                    <option value="referral">Referral</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Importo Vendita
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={commissionForm.amount}
+                    onChange={(e) => setCommissionForm({...commissionForm, amount: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tasso Commissione (%)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={commissionForm.commissionRate}
+                    onChange={(e) => setCommissionForm({...commissionForm, commissionRate: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Descrizione
+                  </label>
+                  <textarea
+                    value={commissionForm.description}
+                    onChange={(e) => setCommissionForm({...commissionForm, description: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows="3"
+                    placeholder="Descrizione della commissione"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Stato
+                  </label>
+                  <select
+                    value={commissionForm.status}
+                    onChange={(e) => setCommissionForm({...commissionForm, status: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="pending">In Attesa</option>
+                    <option value="paid">Pagata</option>
+                    <option value="cancelled">Cancellata</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Annulla
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Aggiorna Commissione
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Messaggio di feedback */}
+      {message.text && (
+        <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+          message.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+        }`}>
+          {message.text}
+        </div>
+      )}
     </div>
   );
 };

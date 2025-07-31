@@ -14,7 +14,7 @@ const OnboardingWelcome = ({ onComplete }) => {
   const quizQuestions = [
     {
       id: 1,
-      question: "Qual è la missione di Wash The World?",
+              question: "Qual è la missione di MY.PENTASHOP.WORLD?",
       options: [
         "Vendere prodotti di pulizia",
         "Ridurre l'inquinamento dei mari attraverso prodotti ecologici",
@@ -168,7 +168,7 @@ const OnboardingWelcome = ({ onComplete }) => {
                 🎬 Video di Benvenuto
               </h2>
               <p className="text-gray-600">
-                Guarda il video per conoscere la missione di Wash The World
+                Guarda il video per conoscere la missione di MY.PENTASHOP.WORLD
               </p>
             </div>
 

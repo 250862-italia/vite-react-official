@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getApiUrl } from '../../config/api';
 
 const SalesManager = () => {
   const [sales, setSales] = useState([]);
@@ -38,7 +39,7 @@ const SalesManager = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get(getApiUrl('/admin/sales')), {
+      const response = await axios.get(getApiUrl('/admin/sales'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       setSales(response.data.data);
@@ -53,7 +54,7 @@ const SalesManager = () => {
   const loadStats = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(getApiUrl('/admin/sales/stats')), {
+      const response = await axios.get(getApiUrl('/admin/sales/stats'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       setStats(response.data.data);
@@ -65,7 +66,7 @@ const SalesManager = () => {
   const loadAmbassadors = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(getApiUrl('/admin/users')), {
+      const response = await axios.get(getApiUrl('/admin/users'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const ambassadorUsers = response.data.data.filter(user => user.role === 'ambassador');
@@ -87,7 +88,7 @@ const SalesManager = () => {
         totalAmount: total
       };
 
-      await axios.post(getApiUrl('/admin/sales')), saleData, {
+      await axios.post(getApiUrl('/admin/sales'), saleData, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -126,7 +127,7 @@ const SalesManager = () => {
     try {
       setActionLoading(true);
       const token = localStorage.getItem('token');
-      await axios.put(getApiUrl(`/admin/sales/${saleId}`)), updatedData, {
+      await axios.put(getApiUrl(`/admin/sales/${saleId}`), updatedData, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -160,7 +161,7 @@ const SalesManager = () => {
     try {
       setActionLoading(true);
       const token = localStorage.getItem('token');
-      await axios.delete(getApiUrl(`/admin/sales/${saleId}`)), {
+      await axios.delete(getApiUrl(`/admin/sales/${saleId}`), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -229,12 +230,15 @@ const SalesManager = () => {
     .filter(sale => {
       const matchesSearch = sale.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            sale.customerEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           sale.saleId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (sale.saleId || sale.id)?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           sale.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            sale.ambassadorInfo?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            sale.ambassadorInfo?.lastName?.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesStatus = statusFilter === 'all' || sale.status === statusFilter;
-      const matchesAmbassador = ambassadorFilter === 'all' || sale.ambassadorId === parseInt(ambassadorFilter);
+      const matchesAmbassador = ambassadorFilter === 'all' || 
+                               sale.ambassadorId === parseInt(ambassadorFilter) || 
+                               sale.userId === parseInt(ambassadorFilter);
       
       return matchesSearch && matchesStatus && matchesAmbassador;
     })
@@ -245,8 +249,8 @@ const SalesManager = () => {
         aValue = new Date(a.createdAt);
         bValue = new Date(b.createdAt);
       } else if (sortBy === 'totalAmount') {
-        aValue = a.totalAmount;
-        bValue = b.totalAmount;
+        aValue = a.totalAmount || a.amount || 0;
+        bValue = b.totalAmount || b.amount || 0;
       } else if (sortBy === 'status') {
         aValue = a.status;
         bValue = b.status;
@@ -331,7 +335,7 @@ const SalesManager = () => {
                 <div className="text-sm text-gray-600">Fatturato</div>
               </div>
               <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">€{stats.totalCommissions?.toFixed(2)}</div>
+                <div className="text-2xl font-bold text-purple-600">€{Math.round(stats.totalCommissions || 0)}</div>
                 <div className="text-sm text-gray-600">Commissioni</div>
               </div>
               <div className="text-center p-4 bg-yellow-50 rounded-lg">
@@ -472,7 +476,7 @@ const SalesManager = () => {
                 {filteredSales.map((sale) => (
                   <tr key={sale.saleId} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">
-                      {sale.saleId}
+                      {sale.saleId || `SALE_${sale.id}`}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
@@ -483,20 +487,23 @@ const SalesManager = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-8 w-8 rounded-full bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-sm">
-                          {sale.ambassadorInfo?.firstName?.charAt(0).toUpperCase() || 'A'}
+                          {(sale.ambassadorInfo?.firstName || sale.username || 'A').charAt(0).toUpperCase()}
                         </div>
                         <div className="ml-3">
                           <div className="text-sm font-medium text-gray-900">
-                            {sale.ambassadorInfo?.firstName} {sale.ambassadorInfo?.lastName}
+                            {sale.ambassadorInfo?.firstName && sale.ambassadorInfo?.lastName 
+                              ? `${sale.ambassadorInfo.firstName} ${sale.ambassadorInfo.lastName}`
+                              : sale.username || 'Ambassador'
+                            }
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
-                      €{sale.totalAmount?.toFixed(2)}
+                      €{(sale.totalAmount || sale.amount || 0).toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      €{sale.commissionAmount?.toFixed(2)}
+                      €{(sale.commissionAmount || sale.commission || 0).toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(sale.status)}`}>
@@ -504,7 +511,14 @@ const SalesManager = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(sale.createdAt).toLocaleDateString('it-IT')}
+                      {(() => {
+                        try {
+                          const date = new Date(sale.createdAt || sale.date || sale.saleDate);
+                          return isNaN(date.getTime()) ? 'Data non disponibile' : date.toLocaleDateString('it-IT');
+                        } catch (error) {
+                          return 'Data non disponibile';
+                        }
+                      })()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">

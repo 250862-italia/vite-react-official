@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getApiUrl } from '../../config/api';
 
 const QuizPlayer = ({ task, onComplete }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -16,7 +17,7 @@ const QuizPlayer = ({ task, onComplete }) => {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const response = await axios.get(getApiUrl(`/tasks/${task.id}/quiz`)), {
+        const response = await axios.get(getApiUrl(`/tasks/${task.id}/quiz`), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -65,7 +66,7 @@ const QuizPlayer = ({ task, onComplete }) => {
   const handleComplete = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(getApiUrl(`/tasks/${task.id}/quiz/validate`)), {
+      const response = await axios.post(getApiUrl(`/tasks/${task.id}/quiz/validate`), {
         answers
       }, {
         headers: {
@@ -99,7 +100,7 @@ const QuizPlayer = ({ task, onComplete }) => {
       <div className="card max-w-2xl mx-auto">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-neutral-600">Caricamento quiz...</p>
+          <p className="text-neutral-600">Caricamento quiz MY.PENTASHOP.WORLD...</p>
         </div>
       </div>
     );

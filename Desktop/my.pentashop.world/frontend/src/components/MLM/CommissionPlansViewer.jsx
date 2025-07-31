@@ -10,6 +10,7 @@ import {
   CheckCircle,
   Info
 } from 'lucide-react';
+import { formatCurrency, formatPercentage } from '../../utils/formatters';
 
 const CommissionPlansViewer = () => {
   const [commissionPlans, setCommissionPlans] = useState([]);
@@ -56,16 +57,7 @@ const CommissionPlansViewer = () => {
     }
   };
 
-  const formatPercentage = (value) => {
-    return `${(value * 100).toFixed(1)}%`;
-  };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('it-IT', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
-  };
 
   if (loading) {
     return (

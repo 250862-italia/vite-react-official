@@ -1,6 +1,6 @@
 {
   "name": "wash-the-world-backend",
-  "description": "Backend API per la piattaforma Wash The World",
+  "description": "Backend API per la piattaforma MY.PENTASHOP.WORLD",
   "version": "1.0.0",
   "license": "MIT",
   "keywords": [
@@ -10,7 +10,7 @@
     "onboarding",
     "gamification"
   ],
-  "author": "Wash The World Team",
+  "author": "MY.PENTASHOP.WORLD Team",
   "main": "src/index.js",
   "engines": {
     "node": ">=18.0.0"
@@ -34,6 +34,7 @@
   "dependencies": {
     "@paypal/checkout-server-sdk": "^1.0.3",
     "axios": "^1.11.0",
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
@@ -53,7 +54,8 @@
     "sqlite3": "^5.1.7",
     "stripe": "^18.2.1",
     "uuid": "^9.0.1",
-    "web3": "^4.2.0"
+    "web3": "^4.2.0",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",

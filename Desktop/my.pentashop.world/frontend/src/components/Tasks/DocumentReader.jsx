@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getApiUrl } from '../../config/api';
 
 const DocumentReader = ({ task, onComplete }) => {
   const [documentData, setDocumentData] = useState(null);
@@ -15,7 +16,7 @@ const DocumentReader = ({ task, onComplete }) => {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const response = await axios.get(getApiUrl(`/tasks/${task.id}/document`)), {
+        const response = await axios.get(getApiUrl(`/tasks/${task.id}/document`), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -56,7 +57,7 @@ const DocumentReader = ({ task, onComplete }) => {
   const handleComplete = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(getApiUrl(`/tasks/${task.id}/document/complete`)), {
+      const response = await axios.post(getApiUrl(`/tasks/${task.id}/document/complete`), {
         readTime
       }, {
         headers: {

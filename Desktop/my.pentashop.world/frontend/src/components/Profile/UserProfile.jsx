@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getApiUrl } from '../../config/api';
 
 const UserProfile = () => {
   const [profile, setProfile] = useState(null);
@@ -45,7 +46,11 @@ const UserProfile = () => {
         email: profileRes.data.data.email,
         phone: profileRes.data.data.phone,
         country: profileRes.data.data.country,
-        city: profileRes.data.data.city
+        city: profileRes.data.data.city,
+        userType: profileRes.data.data.userType || 'private',
+        fiscalCode: profileRes.data.data.fiscalCode || '',
+        vatNumber: profileRes.data.data.vatNumber || '',
+        iban: profileRes.data.data.iban || ''
       });
     } catch (err) {
       console.error('Errore caricamento profilo:', err);
@@ -67,7 +72,11 @@ const UserProfile = () => {
       email: profile.email,
       phone: profile.phone,
       country: profile.country,
-      city: profile.city
+      city: profile.city,
+      userType: profile.userType || 'private',
+      fiscalCode: profile.fiscalCode || '',
+      vatNumber: profile.vatNumber || '',
+      iban: profile.iban || ''
     });
   };
 
@@ -238,6 +247,59 @@ const UserProfile = () => {
                       />
                     </div>
                   </div>
+                  
+                  {/* Nuovi campi per tipo utente e dati fiscali */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Tipo Utente</label>
+                    <select
+                      name="userType"
+                      value={editForm.userType}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="private">Privato</option>
+                      <option value="company">Azienda</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Codice Fiscale</label>
+                    <input
+                      type="text"
+                      name="fiscalCode"
+                      value={editForm.fiscalCode}
+                      onChange={handleInputChange}
+                      placeholder="Inserisci il codice fiscale"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  
+                  {editForm.userType === 'company' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Partita IVA</label>
+                      <input
+                        type="text"
+                        name="vatNumber"
+                        value={editForm.vatNumber}
+                        onChange={handleInputChange}
+                        placeholder="Inserisci la partita IVA"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  )}
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">IBAN</label>
+                    <input
+                      type="text"
+                      name="iban"
+                      value={editForm.iban}
+                      onChange={handleInputChange}
+                      placeholder="Inserisci l'IBAN"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  
                   <div className="flex space-x-4 pt-4">
                     <button
                       onClick={handleSave}
@@ -273,6 +335,32 @@ const UserProfile = () => {
                       <div>
                         <span className="text-sm text-gray-500">Telefono</span>
                         <p className="font-medium">{profile?.phone}</p>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-500">Tipo Utente</span>
+                        <p className="font-medium">
+                          {profile?.userType === 'company' ? '🏢 Azienda' : '👤 Privato'}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-500">Codice Fiscale</span>
+                        <p className="font-medium font-mono bg-gray-100 px-2 py-1 rounded">
+                          {profile?.fiscalCode || 'Non specificato'}
+                        </p>
+                      </div>
+                      {profile?.userType === 'company' && (
+                        <div>
+                          <span className="text-sm text-gray-500">Partita IVA</span>
+                          <p className="font-medium font-mono bg-gray-100 px-2 py-1 rounded">
+                            {profile?.vatNumber || 'Non specificata'}
+                          </p>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-sm text-gray-500">IBAN</span>
+                        <p className="font-medium font-mono bg-gray-100 px-2 py-1 rounded">
+                          {profile?.iban || 'Non specificato'}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -423,7 +511,7 @@ const UserProfile = () => {
                 </div>
                 <div>
                   <span className="text-sm text-gray-500">Commissioni Totali</span>
-                  <p className="font-medium text-lg">€{profile?.totalCommissions}</p>
+                  <p className="font-medium text-lg">€{Math.round(profile?.totalCommissions || 0)}</p>
                 </div>
                 <div>
                   <span className="text-sm text-gray-500">Sponsor Code</span>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getApiUrl } from '../../config/api';
 
 const KYCManager = () => {
   const [kycRequests, setKycRequests] = useState([]);
@@ -22,15 +23,18 @@ const KYCManager = () => {
 
   const loadKYCRequests = async () => {
     try {
+      console.log('🔄 Caricamento richieste KYC...');
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get(getApiUrl('/admin/kyc')), {
+      const response = await axios.get(getApiUrl('/admin/kyc'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      console.log('✅ Richieste KYC caricate:', response.data.data.length);
       setKycRequests(response.data.data);
     } catch (err) {
-      console.error('Errore caricamento KYC:', err);
-      setError('Errore nel caricamento delle richieste KYC');
+      console.error('❌ Errore caricamento KYC:', err);
+      console.error('❌ Dettagli errore:', err.response?.data || err.message);
+      setError(`Errore nel caricamento delle richieste KYC: ${err.response?.data?.error || err.message}`);
     } finally {
       setLoading(false);
     }
@@ -39,7 +43,7 @@ const KYCManager = () => {
   const loadStats = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(getApiUrl('/admin/kyc/stats')), {
+      const response = await axios.get(getApiUrl('/admin/kyc/stats'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       setStats(response.data.data);
@@ -50,14 +54,18 @@ const KYCManager = () => {
 
   const handleStatusUpdate = async (kycId, newStatus, notes = '') => {
     try {
+      console.log('🔄 Aggiornamento stato KYC:', { kycId, newStatus, notes });
       setActionLoading(true);
       const token = localStorage.getItem('token');
-      await axios.put(getApiUrl(`/admin/kyc/${kycId}/status`)), {
+      
+      const response = await axios.put(getApiUrl(`/admin/kyc/${kycId}/status`), {
         status: newStatus,
         notes: notes
       }, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      
+      console.log('✅ Risposta aggiornamento KYC:', response.data);
       
       // Ricarica i dati
       await loadKYCRequests();
@@ -67,9 +75,12 @@ const KYCManager = () => {
       
       const statusText = {
         'approved': 'Approvato',
+        'accepted': 'Accettato',
         'rejected': 'Rifiutato',
+        'cancelled': 'Annullato',
         'pending': 'Rimesso in attesa',
-        'paused': 'Messo in pausa'
+        'paused': 'Messo in pausa',
+        'modified': 'Modificato'
       };
       
       setMessage({ 
@@ -78,12 +89,13 @@ const KYCManager = () => {
       });
       setTimeout(() => setMessage({ type: '', text: '' }), 3000);
     } catch (err) {
-      console.error('Errore aggiornamento stato KYC:', err);
+      console.error('❌ Errore aggiornamento stato KYC:', err);
+      console.error('❌ Dettagli errore:', err.response?.data || err.message);
       setMessage({ 
         type: 'error', 
-        text: 'Errore nell\'aggiornamento dello stato KYC' 
+        text: `Errore nell'aggiornamento dello stato KYC: ${err.response?.data?.error || err.message}` 
       });
-      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      setTimeout(() => setMessage({ type: '', text: '' }), 5000);
     } finally {
       setActionLoading(false);
     }
@@ -97,7 +109,7 @@ const KYCManager = () => {
     try {
       setActionLoading(true);
       const token = localStorage.getItem('token');
-      await axios.delete(getApiUrl(`/admin/kyc/${kycId}`)), {
+      await axios.delete(getApiUrl(`/admin/kyc/${kycId}`), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -125,9 +137,12 @@ const KYCManager = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'approved': return 'bg-green-100 text-green-800';
+      case 'accepted': return 'bg-green-100 text-green-800';
       case 'rejected': return 'bg-red-100 text-red-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'paused': return 'bg-gray-100 text-gray-800';
+      case 'modified': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -135,26 +150,39 @@ const KYCManager = () => {
   const getStatusText = (status) => {
     switch (status) {
       case 'approved': return 'Approvato';
+      case 'accepted': return 'Accettato';
       case 'rejected': return 'Rifiutato';
+      case 'cancelled': return 'Annullato';
       case 'pending': return 'In Attesa';
       case 'paused': return 'In Pausa';
+      case 'modified': return 'Modificato';
       default: return status;
     }
   };
 
   const getActionButtons = (kyc) => {
-    if (kyc.status === 'approved') {
+    // Usa kycId se disponibile, altrimenti usa id
+    const kycIdentifier = kyc.kycId || kyc.id;
+    
+    if (kyc.status === 'approved' || kyc.status === 'accepted') {
       return (
         <div className="flex space-x-2">
           <button
-            onClick={() => handleStatusUpdate(kyc.kycId, 'paused')}
+            onClick={() => handleStatusUpdate(kycIdentifier, 'modified')}
+            disabled={actionLoading}
+            className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+          >
+            ✏️ Modifica
+          </button>
+          <button
+            onClick={() => handleStatusUpdate(kycIdentifier, 'paused')}
             disabled={actionLoading}
             className="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50"
           >
             ⏸️ Pausa
           </button>
           <button
-            onClick={() => handleDeleteKYC(kyc.kycId)}
+            onClick={() => handleDeleteKYC(kycIdentifier)}
             disabled={actionLoading}
             className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
           >
@@ -162,18 +190,18 @@ const KYCManager = () => {
           </button>
         </div>
       );
-    } else if (kyc.status === 'rejected') {
+    } else if (kyc.status === 'rejected' || kyc.status === 'cancelled') {
       return (
         <div className="flex space-x-2">
           <button
-            onClick={() => handleStatusUpdate(kyc.kycId, 'pending')}
+            onClick={() => handleStatusUpdate(kycIdentifier, 'pending')}
             disabled={actionLoading}
             className="px-3 py-1 text-xs bg-yellow-500 text-white rounded hover:bg-yellow-600 disabled:opacity-50"
           >
             🔄 Riprova
           </button>
           <button
-            onClick={() => handleDeleteKYC(kyc.kycId)}
+            onClick={() => handleDeleteKYC(kycIdentifier)}
             disabled={actionLoading}
             className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
           >
@@ -181,25 +209,39 @@ const KYCManager = () => {
           </button>
         </div>
       );
-    } else if (kyc.status === 'pending') {
+    } else if (kyc.status === 'pending' || kyc.status === 'submitted') {
       return (
         <div className="flex space-x-2">
           <button
-            onClick={() => handleStatusUpdate(kyc.kycId, 'approved')}
+            onClick={() => handleStatusUpdate(kycIdentifier, 'accepted')}
+            disabled={actionLoading}
+            className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+          >
+            ✅ Accetta
+          </button>
+          <button
+            onClick={() => handleStatusUpdate(kycIdentifier, 'approved')}
             disabled={actionLoading}
             className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
           >
             ✅ Approva
           </button>
           <button
-            onClick={() => handleStatusUpdate(kyc.kycId, 'rejected')}
+            onClick={() => handleStatusUpdate(kycIdentifier, 'rejected')}
             disabled={actionLoading}
             className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
           >
             ❌ Rifiuta
           </button>
           <button
-            onClick={() => handleStatusUpdate(kyc.kycId, 'paused')}
+            onClick={() => handleStatusUpdate(kycIdentifier, 'cancelled')}
+            disabled={actionLoading}
+            className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+          >
+            ❌ Annulla
+          </button>
+          <button
+            onClick={() => handleStatusUpdate(kycIdentifier, 'paused')}
             disabled={actionLoading}
             className="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50"
           >
@@ -211,25 +253,58 @@ const KYCManager = () => {
       return (
         <div className="flex space-x-2">
           <button
-            onClick={() => handleStatusUpdate(kyc.kycId, 'approved')}
+            onClick={() => handleStatusUpdate(kycIdentifier, 'accepted')}
+            disabled={actionLoading}
+            className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+          >
+            ✅ Accetta
+          </button>
+          <button
+            onClick={() => handleStatusUpdate(kycIdentifier, 'approved')}
             disabled={actionLoading}
             className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
           >
             ✅ Approva
           </button>
           <button
-            onClick={() => handleStatusUpdate(kyc.kycId, 'rejected')}
+            onClick={() => handleStatusUpdate(kycIdentifier, 'rejected')}
             disabled={actionLoading}
             className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
           >
             ❌ Rifiuta
           </button>
           <button
-            onClick={() => handleStatusUpdate(kyc.kycId, 'pending')}
+            onClick={() => handleStatusUpdate(kycIdentifier, 'cancelled')}
             disabled={actionLoading}
-            className="px-3 py-1 text-xs bg-yellow-500 text-white rounded hover:bg-yellow-600 disabled:opacity-50"
+            className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
           >
-            🔄 Ripendi
+            ❌ Annulla
+          </button>
+        </div>
+      );
+    } else if (kyc.status === 'modified') {
+      return (
+        <div className="flex space-x-2">
+          <button
+            onClick={() => handleStatusUpdate(kycIdentifier, 'accepted')}
+            disabled={actionLoading}
+            className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+          >
+            ✅ Accetta
+          </button>
+          <button
+            onClick={() => handleStatusUpdate(kycIdentifier, 'approved')}
+            disabled={actionLoading}
+            className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+          >
+            ✅ Approva
+          </button>
+          <button
+            onClick={() => handleStatusUpdate(kycIdentifier, 'cancelled')}
+            disabled={actionLoading}
+            className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+          >
+            ❌ Annulla
           </button>
         </div>
       );
@@ -239,10 +314,11 @@ const KYCManager = () => {
 
   const filteredKYC = kycRequests
     .filter(kyc => {
+      const kycIdentifier = kyc.kycId || kyc.id;
       const matchesSearch = kyc.userInfo?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            kyc.userInfo?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            kyc.userInfo?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           kyc.kycId?.toLowerCase().includes(searchTerm.toLowerCase());
+                           kycIdentifier?.toString().toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesStatus = statusFilter === 'all' || kyc.status === statusFilter;
       
@@ -434,22 +510,24 @@ const KYCManager = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredKYC.map((kyc) => (
-                  <tr key={kyc.kycId} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-400 to-purple-600 flex items-center justify-center text-white font-bold">
-                          {kyc.userInfo?.firstName?.charAt(0).toUpperCase() || 'U'}
+                {filteredKYC.map((kyc) => {
+                  const kycIdentifier = kyc.kycId || kyc.id;
+                  return (
+                    <tr key={kycIdentifier} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-400 to-purple-600 flex items-center justify-center text-white font-bold">
+                            {kyc.userInfo?.firstName?.charAt(0).toUpperCase() || 'U'}
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{kyc.userInfo?.firstName} {kyc.userInfo?.lastName}</div>
+                            <div className="text-sm text-gray-500">{kyc.userInfo?.email}</div>
+                          </div>
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{kyc.userInfo?.firstName} {kyc.userInfo?.lastName}</div>
-                          <div className="text-sm text-gray-500">{kyc.userInfo?.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">
-                      {kyc.kycId}
-                    </td>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">
+                        {kycIdentifier}
+                      </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(kyc.status)}`}>
                         {getStatusText(kyc.status)}
@@ -462,7 +540,7 @@ const KYCManager = () => {
                       {getActionButtons(kyc)}
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>

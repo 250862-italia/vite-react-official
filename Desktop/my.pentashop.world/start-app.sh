@@ -1,88 +1,81 @@
 #!/bin/bash
 
-echo "🚀 Avvio Wash The World Platform..."
-echo ""
+echo "🚀 AVVIO SISTEMA PENTASHOP WORLD"
+echo "=================================="
 
-# Ferma eventuali processi esistenti
-echo "🛑 Fermando processi esistenti..."
-pkill -f "node.*src/index.js" 2>/dev/null
-pkill -f "vite" 2>/dev/null
-pkill -f "nodemon" 2>/dev/null
+# Kill tutti i processi esistenti
+echo "🧹 Pulizia processi esistenti..."
+pkill -f "node" 2>/dev/null
+pkill -f "npm" 2>/dev/null
+sleep 3
 
-# Aspetta che i processi si fermino
+# Verifica che le porte siano libere
+echo "🔍 Verifica porte..."
+if lsof -Pi :3001 -sTCP:LISTEN -t >/dev/null ; then
+    echo "❌ Porta 3001 occupata"
+    lsof -ti:3001 | xargs kill -9
+fi
+
+if lsof -Pi :5173 -sTCP:LISTEN -t >/dev/null ; then
+    echo "❌ Porta 5173 occupata"
+    lsof -ti:5173 | xargs kill -9
+fi
+
 sleep 2
 
-# Verifica e risolve problemi di dipendenze
-echo "🔧 Verifica dipendenze..."
-cd frontend && npm install @remix-run/router 2>/dev/null
-cd ../backend && npm install 2>/dev/null
+# Avvia backend
+echo "🔧 Avvio backend..."
+cd backend
+node src/index.js &
+BACKEND_PID=$!
 cd ..
 
-# Avvia il backend
-echo "🔧 Avvio backend..."
-cd backend && npm run dev &
-BACKEND_PID=$!
-
-# Aspetta che il backend si avvii
 sleep 5
 
-# Testa il backend
+# Test backend
 echo "🧪 Test backend..."
-if curl -s http://localhost:3000/health > /dev/null; then
-    echo "✅ Backend avviato correttamente su http://localhost:3000"
+if curl -s http://localhost:3001/health > /dev/null; then
+    echo "✅ Backend OK"
 else
-    echo "❌ Errore nell'avvio del backend"
+    echo "❌ Backend FAIL"
     exit 1
 fi
 
-# Avvia il frontend
+# Avvia frontend
 echo "🎨 Avvio frontend..."
-cd ../frontend && npm run dev &
+cd frontend
+npm run dev &
 FRONTEND_PID=$!
+cd ..
 
-# Aspetta che il frontend si avvii
-sleep 5
+sleep 8
 
-# Testa il frontend
+# Test frontend
 echo "🧪 Test frontend..."
-if curl -s http://localhost:5173/ > /dev/null; then
-    echo "✅ Frontend avviato correttamente su http://localhost:5173"
+if curl -s http://localhost:5173 > /dev/null; then
+    echo "✅ Frontend OK"
 else
-    echo "❌ Errore nell'avvio del frontend"
+    echo "❌ Frontend FAIL"
     exit 1
 fi
 
+# Test login
+echo "🔐 Test login admin..."
+LOGIN_RESPONSE=$(curl -s -X POST http://localhost:3001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"password"}')
+
+if echo "$LOGIN_RESPONSE" | grep -q "token"; then
+    echo "✅ Login OK"
+else
+    echo "❌ Login FAIL"
+    echo "Response: $LOGIN_RESPONSE"
+fi
+
 echo ""
-echo "🎉 Applicazione avviata con successo!"
-echo ""
+echo "🎉 SISTEMA AVVIATO CON SUCCESSO!"
 echo "📱 Frontend: http://localhost:5173"
-echo "🔧 Backend: http://localhost:3000"
+echo "🔧 Backend: http://localhost:3001"
+echo "🔐 Admin: admin / password"
 echo ""
-echo "🔐 Credenziali di test:"
-echo "   • testuser / password (Utente normale)"
-echo "   • admin / admin123 (Amministratore)"
-echo "   • ambassador1 / ambassador123 (Ambassador MLM)"
-echo "   • Gianni 62 / password123 (Gianni Rossi)"
-echo "   • testuser2 / password123 (Giuseppe Verdi)"
-echo "   • nuovo / password123 (Nuovo utente)"
-echo ""
-echo "💡 Per fermare l'applicazione, premi Ctrl+C"
-echo ""
-
-# Funzione per pulire i processi quando si interrompe lo script
-cleanup() {
-    echo ""
-    echo "🛑 Fermando applicazione..."
-    kill $BACKEND_PID 2>/dev/null
-    kill $FRONTEND_PID 2>/dev/null
-    pkill -f "node.*src/index.js" 2>/dev/null
-    pkill -f "vite" 2>/dev/null
-    echo "✅ Applicazione fermata"
-    exit 0
-}
-
-# Intercetta il segnale di interruzione
-trap cleanup SIGINT SIGTERM
-
-# Mantieni lo script in esecuzione
-wait 
+echo "Per fermare: pkill -f 'node'" 

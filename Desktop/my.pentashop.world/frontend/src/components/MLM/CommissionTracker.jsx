@@ -15,6 +15,8 @@ import {
   Target,
   Award
 } from 'lucide-react';
+import { getApiUrl } from '../../config/api';
+import { formatCurrency, formatPercentage, safeReduce } from '../../utils/formatters';
 
 const CommissionTracker = () => {
   const [commissionData, setCommissionData] = useState(null);
@@ -25,45 +27,20 @@ const CommissionTracker = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMessage, setPaymentMessage] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState('ambassador');
+  const [isPaymentAuthorized, setIsPaymentAuthorized] = useState(false);
+  const [userPaymentAuthorized, setUserPaymentAuthorized] = useState(false);
 
   useEffect(() => {
     fetchCommissionData();
     fetchMLMData();
     fetchPlans();
+    fetchPaymentAuthorization();
   }, []);
 
   const fetchCommissionData = async () => {
     try {
-      const response = await fetch('/api/mlm/commissions');
-      const data = await response.json();
-      
-      if (data.success) {
-        setCommissionData(data.data);
-      }
-    } catch (error) {
-      console.error('Errore nel caricamento dati commissioni:', error);
-    }
-  };
-
-  const fetchMLMData = async () => {
-    try {
-      const response = await fetch('/api/mlm/commissions-advanced');
-      const data = await response.json();
-      
-      if (data.success) {
-        setMlmData(data.data);
-      }
-    } catch (error) {
-      console.error('Errore nel caricamento dati MLM:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchPlans = async () => {
-    try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/ambassador/commission-plans', {
+      const response = await fetch(getApiUrl('/mlm/commissions'), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -72,10 +49,78 @@ const CommissionTracker = () => {
       const data = await response.json();
       
       if (data.success) {
-        setPlans(data.data);
+        setCommissionData(data.data);
+      } else {
+        console.error('❌ Errore risposta commissioni:', data);
+      }
+    } catch (error) {
+      console.error('❌ Errore nel caricamento dati commissioni:', error);
+    }
+  };
+
+  const fetchMLMData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(getApiUrl('/mlm/commissions-advanced'), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setMlmData(data.data);
+      } else {
+        console.error('❌ Errore risposta MLM:', data);
+        setMlmData(null);
+      }
+    } catch (error) {
+      console.error('❌ Errore nel caricamento dati MLM:', error);
+      setMlmData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPlans = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(getApiUrl('/ambassador/commission-plans'), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setPlans(data.data.currentPlan);
       }
     } catch (error) {
       console.error('Errore nel caricamento piani:', error);
+    }
+  };
+
+  const fetchPaymentAuthorization = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(getApiUrl('/ambassador/commission-payment/authorization-status'), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setIsPaymentAuthorized(data.data.isPaymentAuthorized);
+        setUserPaymentAuthorized(data.data.userPaymentAuthorized);
+      }
+    } catch (error) {
+      console.error('Errore nel caricamento autorizzazione pagamento:', error);
     }
   };
 
@@ -148,16 +193,7 @@ const CommissionTracker = () => {
     }
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('it-IT', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
-  };
 
-  const formatPercentage = (rate) => {
-    return `${(rate * 100).toFixed(1)}%`;
-  };
 
   if (loading) {
     return (
@@ -177,7 +213,26 @@ const CommissionTracker = () => {
   if (!mlmData) {
     return (
       <div className="bg-white rounded-xl shadow-sm border p-6">
-        <p className="text-gray-500">Errore nel caricamento dei dati MLM</p>
+        <div className="text-center py-8">
+          <div className="text-gray-400 mb-4">
+            <AlertCircle className="h-12 w-12 mx-auto" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">
+            Errore nel caricamento dei dati MLM
+          </h3>
+          <p className="text-gray-500">
+            Impossibile caricare le commissioni. Riprova più tardi.
+          </p>
+          <button 
+            onClick={() => {
+              setLoading(true);
+              fetchMLMData();
+            }}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Riprova
+          </button>
+        </div>
       </div>
     );
   }
@@ -193,17 +248,27 @@ const CommissionTracker = () => {
             💰 Sistema Commissioni MLM
           </h2>
           <p className="text-neutral-600">
-            {plan?.name || 'WASH THE WORLD AMBASSADOR'}
+                            {plan?.name || 'MY.PENTASHOP.WORLD AMBASSADOR'}
           </p>
         </div>
         <div className="flex space-x-2">
-          <button
-            onClick={() => setShowPaymentModal(true)}
-            className="btn btn-primary btn-sm"
-          >
-            <CreditCard className="h-4 w-4 mr-2" />
-            Richiedi Pagamento
-          </button>
+          {isPaymentAuthorized && userPaymentAuthorized ? (
+            <button
+              onClick={() => setShowPaymentModal(true)}
+              className="btn btn-primary btn-sm"
+            >
+              <CreditCard className="h-4 w-4 mr-2" />
+              Richiedi Pagamento
+            </button>
+          ) : (
+            <button
+              disabled
+              className="btn btn-secondary btn-sm opacity-75 cursor-not-allowed"
+            >
+              <CreditCard className="h-4 w-4 mr-2" />
+              Diventa Ambassador
+            </button>
+          )}
         </div>
       </div>
 
@@ -304,37 +369,37 @@ const CommissionTracker = () => {
               <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
                 <div className="text-center">
                   <div className="font-bold text-blue-600">
-                    {formatPercentage(plan.levels.direct_sale)}
+                    {formatPercentage(plan.directSale || 0)}
                   </div>
                   <div className="text-xs text-blue-600">Vendita Diretta</div>
                 </div>
                 <div className="text-center">
                   <div className="font-bold text-blue-600">
-                    {formatPercentage(plan.levels.level_1)}
+                    {formatPercentage(plan.level1 || 0)}
                   </div>
                   <div className="text-xs text-blue-600">1° Livello</div>
                 </div>
                 <div className="text-center">
                   <div className="font-bold text-blue-600">
-                    {formatPercentage(plan.levels.level_2)}
+                    {formatPercentage(plan.level2 || 0)}
                   </div>
                   <div className="text-xs text-blue-600">2° Livello</div>
                 </div>
                 <div className="text-center">
                   <div className="font-bold text-blue-600">
-                    {formatPercentage(plan.levels.level_3)}
+                    {formatPercentage(plan.level3 || 0)}
                   </div>
                   <div className="text-xs text-blue-600">3° Livello</div>
                 </div>
                 <div className="text-center">
                   <div className="font-bold text-blue-600">
-                    {formatPercentage(plan.levels.level_4)}
+                    {formatPercentage(plan.level4 || 0)}
                   </div>
                   <div className="text-xs text-blue-600">4° Livello</div>
                 </div>
                 <div className="text-center">
                   <div className="font-bold text-blue-600">
-                    {formatPercentage(plan.levels.level_5 || 0)}
+                    {formatPercentage(plan.level5 || 0)}
                   </div>
                   <div className="text-xs text-blue-600">5° Livello</div>
                 </div>
@@ -437,7 +502,7 @@ const CommissionTracker = () => {
             <div className="bg-gradient-to-br from-green-50 to-blue-50 border border-green-200 rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-xl font-bold text-green-800">
-                  🌊 WASH THE WORLD AMBASSADOR
+                  🌊 MY.PENTASHOP.WORLD AMBASSADOR
                 </h4>
                 <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
                   Piano Base

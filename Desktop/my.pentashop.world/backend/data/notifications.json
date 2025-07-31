@@ -1,0 +1,46 @@
+[
+  {
+    "id": 1,
+    "userId": 2,
+    "username": "Gianni 62",
+    "title": "Nuova vendita completata",
+    "message": "Hai completato una vendita di €69.50 per WELCOME KIT MLM",
+    "type": "success",
+    "priority": "medium",
+    "status": "read",
+    "createdAt": "2025-07-30T10:00:00Z"
+  },
+  {
+    "id": 2,
+    "userId": 2,
+    "username": "Gianni 62",
+    "title": "Commissione guadagnata",
+    "message": "Hai guadagnato €13.90 di commissione dalla vendita",
+    "type": "success",
+    "priority": "high",
+    "status": "unread",
+    "createdAt": "2025-07-30T10:05:00Z"
+  },
+  {
+    "id": 3,
+    "userId": 1,
+    "username": "admin",
+    "title": "Nuova richiesta KYC",
+    "message": "Marco Bianchi ha inviato una nuova richiesta di verifica KYC",
+    "type": "info",
+    "priority": "medium",
+    "status": "unread",
+    "createdAt": "2025-07-28T09:15:00Z"
+  },
+  {
+    "id": 4,
+    "userId": 2,
+    "username": "Gianni 62",
+    "title": "Messaggio ricevuto",
+    "message": "Hai ricevuto un nuovo messaggio da admin",
+    "type": "info",
+    "priority": "low",
+    "status": "unread",
+    "createdAt": "2025-07-30T11:30:00Z"
+  }
+]

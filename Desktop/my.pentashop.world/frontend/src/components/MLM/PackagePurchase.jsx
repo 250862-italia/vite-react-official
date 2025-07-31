@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getApiUrl } from '../../config/api';
+import { formatCurrency, formatPercentage } from '../../utils/formatters';
 
 const PackagePurchase = ({ user }) => {
   const [availablePackages, setAvailablePackages] = useState([]);
@@ -23,7 +25,7 @@ const PackagePurchase = ({ user }) => {
       setError(null);
 
       // Carica pacchetti disponibili
-      const availableResponse = await axios.get(`/api/packages/available?userId=${user.id}`, {
+      const availableResponse = await axios.get(getApiUrl(`/packages/available?userId=${user.id}`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -32,10 +34,12 @@ const PackagePurchase = ({ user }) => {
 
       if (availableResponse.data.success) {
         setAvailablePackages(availableResponse.data.data.packages);
+      } else {
+        console.error('❌ Errore risposta pacchetti disponibili:', availableResponse.data);
       }
 
       // Carica pacchetti acquistati
-      const purchasedResponse = await axios.get(`/api/packages/purchased/${user.id}`, {
+      const purchasedResponse = await axios.get(getApiUrl(`/packages/purchased/${user.id}`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -44,10 +48,13 @@ const PackagePurchase = ({ user }) => {
 
       if (purchasedResponse.data.success) {
         setPurchasedPackages(purchasedResponse.data.data.packages);
+      } else {
+        console.error('❌ Errore risposta pacchetti acquistati:', purchasedResponse.data);
       }
 
     } catch (err) {
-      console.error('Errore caricamento pacchetti:', err);
+      console.error('❌ Errore caricamento pacchetti:', err);
+      console.error('❌ Dettagli errore:', err.response?.data);
       setError('Errore nel caricamento dei pacchetti');
     } finally {
       setIsLoading(false);
@@ -61,7 +68,7 @@ const PackagePurchase = ({ user }) => {
       setIsPurchasing(true);
       setError(null);
 
-      const response = await axios.post('/api/packages/purchase', {
+      const response = await axios.post(getApiUrl('/packages/purchase'), {
         userId: user.id,
         packageId: selectedPackage.id,
         paymentMethod: paymentMethod
@@ -146,7 +153,7 @@ const PackagePurchase = ({ user }) => {
               <div key={pkg.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">{pkg.name}</h3>
-                  <span className="text-2xl font-bold text-blue-600">€{pkg.cost}</span>
+                  <span className="text-2xl font-bold text-blue-600">€{pkg.cost || pkg.price || 0}</span>
                 </div>
                 
                 <div className="space-y-3 mb-4">
@@ -177,12 +184,21 @@ const PackagePurchase = ({ user }) => {
                   </div>
                 </div>
                 
-                <button
-                  onClick={() => setSelectedPackage(pkg)}
-                  className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Acquista Pacchetto
-                </button>
+                {pkg.isAuthorized ? (
+                  <button
+                    onClick={() => setSelectedPackage(pkg)}
+                    className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    Acquista Pacchetto
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg opacity-75 cursor-not-allowed"
+                  >
+                    Diventa Ambassador
+                  </button>
+                )}
               </div>
             ))}
           </div>

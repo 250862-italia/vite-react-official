@@ -1,7 +1,7 @@
 {
   "name": "wash-the-world",
   "version": "1.0.0",
-  "description": "🚀 Wash The World Platform - Gestionale MLM & E-commerce",
+  "description": "🚀 MY.PENTASHOP.WORLD Platform - Gestionale MLM & E-commerce",
   "main": "index.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",

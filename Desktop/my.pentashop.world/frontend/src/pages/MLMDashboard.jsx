@@ -1,22 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { getApiUrl } from '../config/api';
 import Header from '../components/Layout/Header';
 import AmbassadorUpgrade from '../components/MLM/AmbassadorUpgrade';
 import CommissionTracker from '../components/MLM/CommissionTracker';
 import ReferralSystem from '../components/MLM/ReferralSystem';
 import SalesManager from '../components/MLM/SalesManager';
 import NetworkVisualizer from '../components/MLM/NetworkVisualizer';
-import CommissionCalculator from '../components/MLM/CommissionCalculator';
-import CommissionPlansViewer from '../components/MLM/CommissionPlansViewer';
+
+
 import AmbassadorStatus from '../components/MLM/AmbassadorStatus';
 import PackagePurchase from '../components/MLM/PackagePurchase';
-import KYCForm from '../components/KYC/KYCForm';
+
+import CommunicationHub from '../components/MLM/CommunicationHub';
 
 function MLMDashboard() {
   const [user, setUser] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeMessage, setUpgradeMessage] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('commissions');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,25 +30,38 @@ function MLMDashboard() {
       return;
     }
 
+    // Gestisci l'anchor nell'URL
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash === '#tasks') {
+        // Naviga alla pagina dei task
+        navigate('/dashboard');
+        return;
+      }
+    };
+
+    // Controlla l'anchor all'avvio
+    handleHashChange();
+
+    // Aggiungi listener per i cambiamenti dell'hash
+    window.addEventListener('hashchange', handleHashChange);
+
     // Carica i dati utente dal backend per avere i dati aggiornati
     const loadUserData = async () => {
       try {
-        const response = await fetch('/api/onboarding/dashboard', {
+        const response = await axios.get(getApiUrl('/dashboard'), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            setUser(data.data.user);
-            // Aggiorna anche il localStorage
-            localStorage.setItem('user', JSON.stringify(data.data.user));
-          }
+        if (response.data.success) {
+          setUser(response.data.data.user);
+          // Aggiorna anche il localStorage
+          localStorage.setItem('user', JSON.stringify(response.data.data.user));
         } else {
-          console.error('Errore caricamento dati utente');
+          console.error('❌ Errore risposta dashboard:', response.data);
           // Fallback al localStorage
           const savedUser = localStorage.getItem('user');
           if (savedUser) {
@@ -55,7 +71,7 @@ function MLMDashboard() {
           }
         }
       } catch (error) {
-        console.error('Errore caricamento dati:', error);
+        console.error('❌ Errore caricamento dati:', error);
         // Fallback al localStorage
         const savedUser = localStorage.getItem('user');
         if (savedUser) {
@@ -67,6 +83,11 @@ function MLMDashboard() {
     };
 
     loadUserData();
+
+    // Cleanup del listener
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
   }, [navigate]);
 
   const handleLogout = () => {
@@ -117,7 +138,10 @@ function MLMDashboard() {
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-neutral-600">Caricamento dati utente...</p>
+        </div>
       </div>
     );
   }
@@ -180,16 +204,7 @@ function MLMDashboard() {
 
         {/* Navigation Tabs */}
         <div className="flex space-x-1 mb-6 bg-neutral-100 rounded-lg p-1">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'overview'
-                ? 'bg-white text-neutral-800 shadow-sm'
-                : 'text-neutral-600 hover:text-neutral-800'
-            }`}
-          >
-            📊 Panoramica
-          </button>
+
           <button
             onClick={() => setActiveTab('commissions')}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
@@ -200,16 +215,7 @@ function MLMDashboard() {
           >
             💰 Commissioni
           </button>
-          <button
-            onClick={() => setActiveTab('calculator')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'calculator'
-                ? 'bg-white text-neutral-800 shadow-sm'
-                : 'text-neutral-600 hover:text-neutral-800'
-            }`}
-          >
-            🧮 Calcolatore
-          </button>
+
           <button
             onClick={() => setActiveTab('network')}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
@@ -230,46 +236,27 @@ function MLMDashboard() {
           >
             👥 Referral
           </button>
+
           <button
-            onClick={() => setActiveTab('plans')}
+            onClick={() => setActiveTab('communications')}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'plans'
+              activeTab === 'communications'
                 ? 'bg-white text-neutral-800 shadow-sm'
                 : 'text-neutral-600 hover:text-neutral-800'
             }`}
           >
-            💰 Piani
-          </button>
-          <button
-            onClick={() => setActiveTab('kyc')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'kyc'
-                ? 'bg-white text-neutral-800 shadow-sm'
-                : 'text-neutral-600 hover:text-neutral-800'
-            }`}
-          >
-            🆔 KYC
+            📞 Comunicazioni
           </button>
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Commission Tracker */}
-            <CommissionTracker />
-            
-            {/* Sales Manager */}
-            <SalesManager />
-          </div>
-        )}
+
 
         {activeTab === 'commissions' && (
           <CommissionTracker />
         )}
 
-        {activeTab === 'calculator' && (
-          <CommissionCalculator />
-        )}
+
 
         {activeTab === 'network' && (
           <NetworkVisualizer />
@@ -279,45 +266,12 @@ function MLMDashboard() {
           <ReferralSystem user={user} />
         )}
 
-        {activeTab === 'plans' && (
-          <CommissionPlansViewer />
-        )}
 
-        {activeTab === 'kyc' && (
-          <div className="card">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold gradient-text">
-                🆔 Verifica Identità (KYC)
-              </h2>
-              <p className="text-neutral-600 mt-2">
-                Completa la verifica della tua identità per accedere a tutte le funzionalità MLM
-              </p>
-            </div>
-            <KYCForm 
-              onKYCComplete={(kycData) => {
-                // Aggiorna lo stato utente con i dati KYC
-                const updatedUser = {
-                  ...user,
-                  kycStatus: 'completed',
-                  kycData: kycData
-                };
-                setUser(updatedUser);
-                localStorage.setItem('user', JSON.stringify(updatedUser));
-                
-                // Mostra messaggio di successo
-                setUpgradeMessage({
-                  type: 'success',
-                  title: '✅ KYC Completato!',
-                  message: 'La tua verifica identità è stata completata con successo.',
-                  details: 'Ora puoi accedere a tutte le funzionalità MLM avanzate.'
-                });
-                
-                setTimeout(() => {
-                  setUpgradeMessage(null);
-                }, 5000);
-              }}
-            />
-          </div>
+
+
+
+        {activeTab === 'communications' && (
+          <CommunicationHub user={user} />
         )}
 
         {/* Upgrade Modal */}

@@ -1,0 +1,440 @@
+{
+  "testInfo": {
+    "date": "2025-07-30T16:52:26.753Z",
+    "duration": "7s",
+    "totalUsers": 7,
+    "totalSales": 7,
+    "totalCommissions": 0
+  },
+  "users": [
+    {
+      "id": 3,
+      "username": "PAPA1",
+      "email": "papa1@test.com",
+      "firstName": "PAPA1",
+      "lastName": "Test",
+      "role": "entry_ambassador",
+      "expectedLevel": 0,
+      "sponsorId": null
+    },
+    {
+      "id": 4,
+      "username": "FIGLIO1",
+      "email": "figlio1@test.com",
+      "firstName": "FIGLIO1",
+      "lastName": "Test",
+      "role": "entry_ambassador",
+      "expectedLevel": 1,
+      "sponsorId": 3
+    },
+    {
+      "id": 5,
+      "username": "FIGLIO2",
+      "email": "figlio2@test.com",
+      "firstName": "FIGLIO2",
+      "lastName": "Test",
+      "role": "entry_ambassador",
+      "expectedLevel": 1,
+      "sponsorId": 3
+    },
+    {
+      "id": 6,
+      "username": "NIPOTE1",
+      "email": "nipote1@test.com",
+      "firstName": "NIPOTE1",
+      "lastName": "Test",
+      "role": "entry_ambassador",
+      "expectedLevel": 2,
+      "sponsorId": 4
+    },
+    {
+      "id": 7,
+      "username": "NIPOTE2",
+      "email": "nipote2@test.com",
+      "firstName": "NIPOTE2",
+      "lastName": "Test",
+      "role": "entry_ambassador",
+      "expectedLevel": 2,
+      "sponsorId": 4
+    },
+    {
+      "id": 8,
+      "username": "NIPOTE3",
+      "email": "nipote3@test.com",
+      "firstName": "NIPOTE3",
+      "lastName": "Test",
+      "role": "entry_ambassador",
+      "expectedLevel": 2,
+      "sponsorId": 5
+    },
+    {
+      "id": 9,
+      "username": "NIPOTE4",
+      "email": "nipote4@test.com",
+      "firstName": "NIPOTE4",
+      "lastName": "Test",
+      "role": "entry_ambassador",
+      "expectedLevel": 2,
+      "sponsorId": 5
+    }
+  ],
+  "sales": [
+    {
+      "message": "Vendita creata con successo",
+      "sale": {
+        "saleId": "SALE_1753894347105_3s55euyej",
+        "ambassadorId": 3,
+        "customerName": "Cliente PAPA1",
+        "customerEmail": "cliente_papa1@test.com",
+        "products": [
+          "WELCOME KIT MLM"
+        ],
+        "totalAmount": 139,
+        "commissionRate": 0.1,
+        "commissionAmount": 13.9,
+        "status": "completed",
+        "notes": "Test sale for PAPA1",
+        "createdAt": "2025-07-30T16:52:27.105Z",
+        "updatedAt": "2025-07-30T16:52:27.105Z"
+      }
+    },
+    {
+      "message": "Vendita creata con successo",
+      "sale": {
+        "saleId": "SALE_1753894348139_g3anjzp3p",
+        "ambassadorId": 4,
+        "customerName": "Cliente FIGLIO1",
+        "customerEmail": "cliente_figlio1@test.com",
+        "products": [
+          "WELCOME KIT PENTAGAME"
+        ],
+        "totalAmount": 199,
+        "commissionRate": 0.1,
+        "commissionAmount": 19.900000000000002,
+        "status": "completed",
+        "notes": "Test sale for FIGLIO1",
+        "createdAt": "2025-07-30T16:52:28.139Z",
+        "updatedAt": "2025-07-30T16:52:28.141Z"
+      }
+    }
+  ],
+  "commissions": [
+    {
+      "userId": 3,
+      "username": "PAPA1",
+      "commissions": [
+        {
+          "id": 1,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 13.9,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-30T10:00:00Z",
+          "description": "Commissione vendita WELCOME KIT MLM",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        },
+        {
+          "id": 2,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 76.48,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-29T14:30:00Z",
+          "description": "Commissione vendita Ambassador PENTAGAME",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        },
+        {
+          "id": 3,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 1.79,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-27T09:15:00Z",
+          "description": "Commissione vendita MY.PENTASHOP.WORLD AMBASSADOR",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        }
+      ]
+    },
+    {
+      "userId": 4,
+      "username": "FIGLIO1",
+      "commissions": [
+        {
+          "id": 1,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 13.9,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-30T10:00:00Z",
+          "description": "Commissione vendita WELCOME KIT MLM",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        },
+        {
+          "id": 2,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 76.48,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-29T14:30:00Z",
+          "description": "Commissione vendita Ambassador PENTAGAME",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        },
+        {
+          "id": 3,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 1.79,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-27T09:15:00Z",
+          "description": "Commissione vendita MY.PENTASHOP.WORLD AMBASSADOR",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        }
+      ]
+    },
+    {
+      "userId": 5,
+      "username": "FIGLIO2",
+      "commissions": [
+        {
+          "id": 1,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 13.9,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-30T10:00:00Z",
+          "description": "Commissione vendita WELCOME KIT MLM",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        },
+        {
+          "id": 2,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 76.48,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-29T14:30:00Z",
+          "description": "Commissione vendita Ambassador PENTAGAME",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        },
+        {
+          "id": 3,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 1.79,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-27T09:15:00Z",
+          "description": "Commissione vendita MY.PENTASHOP.WORLD AMBASSADOR",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        }
+      ]
+    },
+    {
+      "userId": 6,
+      "username": "NIPOTE1",
+      "commissions": [
+        {
+          "id": 1,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 13.9,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-30T10:00:00Z",
+          "description": "Commissione vendita WELCOME KIT MLM",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        },
+        {
+          "id": 2,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 76.48,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-29T14:30:00Z",
+          "description": "Commissione vendita Ambassador PENTAGAME",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        },
+        {
+          "id": 3,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 1.79,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-27T09:15:00Z",
+          "description": "Commissione vendita MY.PENTASHOP.WORLD AMBASSADOR",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        }
+      ]
+    },
+    {
+      "userId": 7,
+      "username": "NIPOTE2",
+      "commissions": [
+        {
+          "id": 1,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 13.9,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-30T10:00:00Z",
+          "description": "Commissione vendita WELCOME KIT MLM",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        },
+        {
+          "id": 2,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 76.48,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-29T14:30:00Z",
+          "description": "Commissione vendita Ambassador PENTAGAME",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        },
+        {
+          "id": 3,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 1.79,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-27T09:15:00Z",
+          "description": "Commissione vendita MY.PENTASHOP.WORLD AMBASSADOR",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        }
+      ]
+    },
+    {
+      "userId": 8,
+      "username": "NIPOTE3",
+      "commissions": [
+        {
+          "id": 1,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 13.9,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-30T10:00:00Z",
+          "description": "Commissione vendita WELCOME KIT MLM",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        },
+        {
+          "id": 2,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 76.48,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-29T14:30:00Z",
+          "description": "Commissione vendita Ambassador PENTAGAME",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        },
+        {
+          "id": 3,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 1.79,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-27T09:15:00Z",
+          "description": "Commissione vendita MY.PENTASHOP.WORLD AMBASSADOR",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        }
+      ]
+    },
+    {
+      "userId": 9,
+      "username": "NIPOTE4",
+      "commissions": [
+        {
+          "id": 1,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 13.9,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-30T10:00:00Z",
+          "description": "Commissione vendita WELCOME KIT MLM",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        },
+        {
+          "id": 2,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 76.48,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-29T14:30:00Z",
+          "description": "Commissione vendita Ambassador PENTAGAME",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        },
+        {
+          "id": 3,
+          "userId": 2,
+          "username": "Gianni 62",
+          "amount": 1.79,
+          "type": "direct_sale",
+          "status": "earned",
+          "date": "2025-07-27T09:15:00Z",
+          "description": "Commissione vendita MY.PENTASHOP.WORLD AMBASSADOR",
+          "userEmail": "info@washtw.com",
+          "userRole": "ambassador",
+          "userStatus": "active"
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "warnings": []
+}

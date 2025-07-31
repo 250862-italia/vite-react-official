@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getApiUrl } from '../../config/api';
 
 const TaskManager = () => {
   const [tasks, setTasks] = useState([]);
@@ -39,6 +40,7 @@ const TaskManager = () => {
 
   const getHeaders = () => {
     const token = localStorage.getItem('token');
+    console.log('🔑 Token utilizzato:', token ? 'Presente' : 'Mancante');
     return {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
@@ -52,13 +54,20 @@ const TaskManager = () => {
   const loadTasks = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(getApiUrl('/admin/tasks')), { headers: getHeaders() });
+      console.log('🔄 Caricamento task...');
+      const response = await axios.get(getApiUrl('/admin/tasks'), { headers: getHeaders() });
+      console.log('📊 Risposta server:', response.data);
       if (response.data.success) {
         setTasks(response.data.data);
+        console.log('✅ Task caricati:', response.data.data.length);
+      } else {
+        console.error('❌ Errore risposta server:', response.data);
+        setMessage({ type: 'error', text: response.data.error || 'Errore nel caricamento dei task' });
       }
     } catch (error) {
-      console.error('Errore caricamento task:', error);
-      setMessage({ type: 'error', text: 'Errore nel caricamento dei task' });
+      console.error('❌ Errore caricamento task:', error);
+      console.error('❌ Dettagli errore:', error.response?.data);
+      setMessage({ type: 'error', text: error.response?.data?.error || 'Errore nel caricamento dei task' });
     } finally {
       setLoading(false);
     }
@@ -67,7 +76,7 @@ const TaskManager = () => {
   const handleCreateTask = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(getApiUrl('/admin/tasks')), formData, { headers: getHeaders() });
+      const response = await axios.post(getApiUrl('/admin/tasks'), formData, { headers: getHeaders() });
       if (response.data.success) {
         setShowCreateModal(false);
         resetForm();
@@ -84,7 +93,7 @@ const TaskManager = () => {
   const handleUpdateTask = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.put(getApiUrl(`/admin/tasks/${selectedTask.id}`)), formData, { headers: getHeaders() });
+      const response = await axios.put(getApiUrl(`/admin/tasks/${selectedTask.id}`), formData, { headers: getHeaders() });
       if (response.data.success) {
         setShowEditModal(false);
         setSelectedTask(null);
@@ -100,7 +109,7 @@ const TaskManager = () => {
 
   const handleDeleteTask = async () => {
     try {
-      const response = await axios.delete(getApiUrl(`/admin/tasks/${selectedTask.id}`)), { headers: getHeaders() });
+      const response = await axios.delete(getApiUrl(`/admin/tasks/${selectedTask.id}`), { headers: getHeaders() });
       if (response.data.success) {
         setShowDeleteModal(false);
         setSelectedTask(null);

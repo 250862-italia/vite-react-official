@@ -1,7 +1,7 @@
 [
   {
     "id": 1,
-    "title": "Benvenuto in Wash The World",
+    "title": "Benvenuto in MY.PENTASHOP.WORLD",
     "description": "Guarda il video di benvenuto per conoscere la nostra missione",
     "type": "video",
     "level": 1,
@@ -17,7 +17,7 @@
   },
   {
     "id": 2,
-    "title": "Quiz: Conosci Wash The World?",
+    "title": "Quiz: Conosci MY.PENTASHOP.WORLD?",
     "description": "Testa la tua conoscenza sui valori e la missione",
     "type": "quiz",
     "level": 1,

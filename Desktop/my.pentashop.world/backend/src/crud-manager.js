@@ -131,6 +131,10 @@ class UsersCRUD extends CRUDManager {
       completedTasks: userData.completedTasks || [],
       isActive: userData.isActive !== undefined ? userData.isActive : true,
       isOnboardingComplete: userData.isOnboardingComplete || false,
+      userType: userData.userType || 'private',
+      fiscalCode: userData.fiscalCode || '',
+      vatNumber: userData.vatNumber || '',
+      iban: userData.iban || '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };

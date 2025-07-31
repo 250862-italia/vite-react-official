@@ -162,7 +162,7 @@ const ReferralRegistration = ({ referralCode, onRegistrationComplete }) => {
               Registrazione Completata!
             </h1>
             <p className="text-gray-600 mb-6">
-              Benvenuto in Wash The World! Sei ora ufficialmente Ambassador.
+              Benvenuto in MY.PENTASHOP.WORLD! Sei ora ufficialmente Ambassador.
             </p>
           </div>
           

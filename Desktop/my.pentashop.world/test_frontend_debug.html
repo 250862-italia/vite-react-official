@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Frontend API</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test Frontend API</h1>
+    
+    <div class="test-section info">
+        <h3>1️⃣ Test Connessione Backend</h3>
+        <button onclick="testBackendConnection()">Test Connessione</button>
+        <div id="backend-result"></div>
+    </div>
+
+    <div class="test-section info">
+        <h3>2️⃣ Test Login</h3>
+        <button onclick="testLogin()">Test Login Gianni 62</button>
+        <div id="login-result"></div>
+    </div>
+
+    <div class="test-section info">
+        <h3>3️⃣ Test Dashboard API</h3>
+        <button onclick="testDashboard()">Test Dashboard</button>
+        <div id="dashboard-result"></div>
+    </div>
+
+    <div class="test-section info">
+        <h3>4️⃣ Test Task API</h3>
+        <button onclick="testTasks()">Test Tasks</button>
+        <div id="tasks-result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api';
+        let authToken = null;
+
+        async function testBackendConnection() {
+            const resultDiv = document.getElementById('backend-result');
+            resultDiv.innerHTML = '<p>🔄 Testando connessione...</p>';
+            
+            try {
+                const response = await axios.get('http://localhost:3001/health');
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ Connessione Backend OK</h4>
+                        <pre>${JSON.stringify(response.data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Errore Connessione Backend</h4>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('login-result');
+            resultDiv.innerHTML = '<p>🔄 Testando login...</p>';
+            
+            try {
+                const response = await axios.post(`${API_BASE}/auth/login`, {
+                    username: 'Gianni 62',
+                    password: 'password123'
+                });
+                
+                if (response.data.success) {
+                    authToken = response.data.data.token;
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Login Riuscito</h4>
+                            <p><strong>Utente:</strong> ${response.data.data.user.firstName} ${response.data.data.user.lastName}</p>
+                            <p><strong>Ruolo:</strong> ${response.data.data.user.role}</p>
+                            <p><strong>Token:</strong> ${authToken.substring(0, 50)}...</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Login Fallito</h4>
+                            <pre>${JSON.stringify(response.data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Errore Login</h4>
+                        <pre>${error.response?.data || error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        async function testDashboard() {
+            const resultDiv = document.getElementById('dashboard-result');
+            resultDiv.innerHTML = '<p>🔄 Testando dashboard...</p>';
+            
+            if (!authToken) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Token non disponibile</h4>
+                        <p>Esegui prima il test di login</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            try {
+                const response = await axios.get(`${API_BASE}/dashboard`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.data.success) {
+                    const data = response.data.data;
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Dashboard Caricato</h4>
+                            <p><strong>Utente:</strong> ${data.user.firstName} ${data.user.lastName}</p>
+                            <p><strong>Ruolo:</strong> ${data.user.role}</p>
+                            <p><strong>Task Disponibili:</strong> ${data.availableTasks.length}</p>
+                            <p><strong>Task Completati:</strong> ${data.completedTasks.length}</p>
+                            <p><strong>Progresso:</strong> ${data.progress.percentage}%</p>
+                            
+                            <h5>📋 Task Disponibili:</h5>
+                            <ul>
+                                ${data.availableTasks.map(task => `
+                                    <li>${task.title} (ID: ${task.id}, Tipo: ${task.type})</li>
+                                `).join('')}
+                            </ul>
+                            
+                            <h5>✅ Task Completati:</h5>
+                            <ul>
+                                ${data.completedTasks.map(task => `
+                                    <li>${task.title} (ID: ${task.id}, Tipo: ${task.type})</li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Errore Dashboard</h4>
+                            <pre>${JSON.stringify(response.data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Errore Dashboard</h4>
+                        <pre>${error.response?.data || error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        async function testTasks() {
+            const resultDiv = document.getElementById('tasks-result');
+            resultDiv.innerHTML = '<p>🔄 Testando tasks...</p>';
+            
+            try {
+                const response = await axios.get(`${API_BASE}/tasks`);
+                
+                if (response.data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Tasks Caricati</h4>
+                            <p><strong>Totale Tasks:</strong> ${response.data.data.length}</p>
+                            
+                            <h5>📋 Lista Tasks:</h5>
+                            <ul>
+                                ${response.data.data.map(task => `
+                                    <li>${task.title} (ID: ${task.id}, Tipo: ${task.type}, Attivo: ${task.isActive})</li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Errore Tasks</h4>
+                            <pre>${JSON.stringify(response.data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Errore Tasks</h4>
+                        <pre>${error.response?.data || error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html> 

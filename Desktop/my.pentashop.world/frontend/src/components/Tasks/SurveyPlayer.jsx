@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getApiUrl } from '../../config/api';
 
 const SurveyPlayer = ({ task, onComplete }) => {
   const [surveyData, setSurveyData] = useState(null);
@@ -14,7 +15,7 @@ const SurveyPlayer = ({ task, onComplete }) => {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const response = await axios.get(getApiUrl(`/tasks/${task.id}/survey`)), {
+        const response = await axios.get(getApiUrl(`/tasks/${task.id}/survey`), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -64,7 +65,7 @@ const SurveyPlayer = ({ task, onComplete }) => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(getApiUrl(`/tasks/${task.id}/survey/submit`)), {
+      const response = await axios.post(getApiUrl(`/tasks/${task.id}/survey/submit`), {
         answers
       }, {
         headers: {

@@ -4,6 +4,7 @@ import QuizPlayer from './QuizPlayer';
 import DocumentReader from './DocumentReader';
 import SurveyPlayer from './SurveyPlayer';
 import axios from 'axios';
+import { getApiUrl } from '../../config/api';
 
 const TaskExecutor = ({ task, onComplete, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -14,10 +15,16 @@ const TaskExecutor = ({ task, onComplete, onClose }) => {
     setError(null);
 
     try {
-      // Simula l'invio al backend
-      const response = await axios.post(getApiUrl(`/onboarding/tasks/${completedTask.id}/complete`)), {
-        taskId: completedTask.id,
-        completedAt: new Date().toISOString()
+      // Invia al backend
+      const token = localStorage.getItem('token');
+      const response = await axios.post(getApiUrl(`/tasks/${completedTask.id}/complete`), {
+        completed: true,
+        rewards: completedTask.rewards || { points: 10, tokens: 5, experience: 20 }
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (response.data.success) {
@@ -70,9 +77,12 @@ const TaskExecutor = ({ task, onComplete, onClose }) => {
       <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-neutral-200">
-          <h2 className="text-xl font-bold text-neutral-800">
-            {task.title}
-          </h2>
+          <div>
+            <h2 className="text-xl font-bold text-neutral-800">
+              {task.title}
+            </h2>
+            <p className="text-sm text-neutral-500">MY.PENTASHOP.WORLD - Formazione Ambasciatore</p>
+          </div>
           <button
             onClick={onClose}
             className="text-neutral-500 hover:text-neutral-700 text-2xl"

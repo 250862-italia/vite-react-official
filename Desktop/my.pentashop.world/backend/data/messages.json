@@ -1,0 +1,59 @@
+[
+  {
+    "id": 1,
+    "fromUserId": 2,
+    "fromUsername": "Gianni 62",
+    "toUserId": 1,
+    "toUsername": "admin",
+    "subject": "Richiesta informazioni sui pacchetti",
+    "message": "Salve, vorrei sapere se ci sono nuovi pacchetti disponibili per gli ambassador. Grazie!",
+    "status": "read",
+    "createdAt": "2025-07-30T10:00:00Z"
+  },
+  {
+    "id": 2,
+    "fromUserId": 1,
+    "fromUsername": "admin",
+    "toUserId": 2,
+    "toUsername": "Gianni 62",
+    "subject": "Risposta: Nuovi pacchetti",
+    "message": "Ciao Gianni! Sì, abbiamo nuovi pacchetti in arrivo. Ti aggiornerò presto con i dettagli.",
+    "status": "unread",
+    "createdAt": "2025-07-30T11:30:00Z"
+  },
+  {
+    "id": 3,
+    "fromUserId": 2,
+    "fromUsername": "Gianni 62",
+    "toUserId": 1,
+    "toUsername": "admin",
+    "subject": "Problema con il sistema",
+    "message": "Ho notato un problema nel caricamento dei dati. Puoi controllare?",
+    "status": "unread",
+    "createdAt": "2025-07-30T14:15:00Z"
+  },
+  {
+    "id": 1753962212860,
+    "senderId": 1,
+    "senderName": "admin",
+    "recipientId": 2,
+    "recipientName": "Gianni 62",
+    "message": "prova prova ",
+    "type": "warning",
+    "priority": "medium",
+    "isRead": false,
+    "createdAt": "2025-07-31T11:43:32.860Z"
+  },
+  {
+    "id": 1753962668140,
+    "senderId": 1,
+    "senderName": "admin",
+    "recipientId": 2,
+    "recipientName": "Gianni 62",
+    "message": "hadharhrh",
+    "type": "info",
+    "priority": "high",
+    "isRead": false,
+    "createdAt": "2025-07-31T11:51:08.140Z"
+  }
+]

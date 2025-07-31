@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { formatCurrency, formatPercentage, safeReduce } from '../../utils/formatters';
 
 const ReferralSystem = ({ user }) => {
   const [referrals, setReferrals] = useState([]);
@@ -26,17 +27,16 @@ const ReferralSystem = ({ user }) => {
       if (!user.referralCode) {
         const loadReferralCode = async () => {
           try {
-            const response = await fetch(`/api/referral/code/${user.id}`);
-            if (response.ok) {
-              const data = await response.json();
-              if (data.success) {
-                console.log('✅ Referral code caricato:', data.data.referralCode);
-                // Aggiorna l'utente con il referral code
-                const updatedUser = { ...user, referralCode: data.data.referralCode };
-                // Notifica il parent component dell'aggiornamento
-                if (window.updateUserReferralCode) {
-                  window.updateUserReferralCode(updatedUser);
-                }
+            const token = localStorage.getItem('token');
+            const response = await axios.get('/api/auth/me', {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.data.success) {
+              const updatedUser = { ...user, referralCode: response.data.user.referralCode };
+              console.log('✅ Referral code caricato:', response.data.user.referralCode);
+              // Notifica il parent component dell'aggiornamento
+              if (window.updateUserReferralCode) {
+                window.updateUserReferralCode(updatedUser);
               }
             }
           } catch (error) {
@@ -55,22 +55,20 @@ const ReferralSystem = ({ user }) => {
       setIsLoading(true);
       setError(null);
 
-      // Carica lista referral
-      const referralsResponse = await axios.get(`/api/referral/list/${user.id}`);
+      // Carica lista referral usando il nuovo endpoint
+      const token = localStorage.getItem('token');
+      const referralsResponse = await axios.get('/api/referrals', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
       if (referralsResponse.data.success) {
-        setReferrals(referralsResponse.data.data.referrals);
-        setReferralStats(referralsResponse.data.data.stats);
-      }
-
-      // Carica statistiche dettagliate
-      const statsResponse = await axios.get(`/api/referral/stats/${user.id}`);
-      
-      if (statsResponse.data.success) {
-        setReferralStats(prev => ({
-          ...prev,
-          ...statsResponse.data.data
-        }));
+        setReferrals(referralsResponse.data.referrals || []);
+        setReferralStats(referralsResponse.data.stats || {
+          totalReferrals: 0,
+          activeReferrals: 0,
+          totalCommissionEarned: 0,
+          averageCommissionPerReferral: 0
+        });
       }
 
     } catch (err) {
@@ -93,11 +91,13 @@ const ReferralSystem = ({ user }) => {
       setIsLoading(true);
       setError(null);
 
-      const response = await axios.post('/api/referral/invite', {
-        referrerId: user.id,
+      const token = localStorage.getItem('token');
+      const response = await axios.post('/api/referrals/invite', {
         email: inviteEmail,
         firstName: inviteFirstName,
         lastName: inviteLastName
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.data.success) {
@@ -299,14 +299,14 @@ const ReferralSystem = ({ user }) => {
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button 
-            onClick={() => window.open(`mailto:?subject=Unisciti a Wash The World&body=Usa il mio codice referral: ${user.referralCode}`)}
+                            onClick={() => window.open(`mailto:?subject=Unisciti a MY.PENTASHOP.WORLD&body=Usa il mio codice referral: ${user.referralCode}`)}
             className="btn btn-outline"
           >
             📧 Condividi via Email
           </button>
           <button 
             onClick={() => {
-              const text = `Unisciti a Wash The World! Usa il mio codice referral: ${user.referralCode}`;
+                              const text = `Unisciti a MY.PENTASHOP.WORLD! Usa il mio codice referral: ${user.referralCode}`;
               if (navigator.share) {
                 navigator.share({ text });
               } else {

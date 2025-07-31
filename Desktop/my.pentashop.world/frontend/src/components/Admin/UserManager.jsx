@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getApiUrl } from '../../config/api';
 
 const UserManager = () => {
   const [users, setUsers] = useState([]);
@@ -23,6 +24,24 @@ const UserManager = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [userPackages, setUserPackages] = useState([]);
   const [packagesLoading, setPackagesLoading] = useState(false);
+  const [showPackagesModal, setShowPackagesModal] = useState(false);
+  const [showAddPackageModal, setShowAddPackageModal] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState(null);
+  const [availablePackages, setAvailablePackages] = useState([]);
+  const [packageFormData, setPackageFormData] = useState({
+    packageId: '',
+    packageName: '',
+    cost: 0,
+    packageCode: '',
+    commissionRates: {
+      directSale: 0.1,
+      level1: 0,
+      level2: 0,
+      level3: 0,
+      level4: 0,
+      level5: 0
+    }
+  });
 
   // Form states
   const [formData, setFormData] = useState({
@@ -31,6 +50,13 @@ const UserManager = () => {
     firstName: '',
     lastName: '',
     password: '',
+    phone: '',
+    country: '',
+    city: '',
+    userType: 'private',
+    fiscalCode: '',
+    vatNumber: '',
+    iban: '',
     role: 'entry_ambassador',
     level: 1,
     points: 0,
@@ -58,7 +84,7 @@ const UserManager = () => {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(getApiUrl('/admin/users')), { headers: getHeaders() });
+      const response = await axios.get(getApiUrl('/admin/users'), { headers: getHeaders() });
       if (response.data.success) {
         setUsers(response.data.data);
       }
@@ -73,7 +99,7 @@ const UserManager = () => {
   const handleCreateUser = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(getApiUrl('/admin/users')), formData, { headers: getHeaders() });
+      const response = await axios.post(getApiUrl('/admin/users'), formData, { headers: getHeaders() });
       if (response.data.success) {
         setShowCreateModal(false);
         resetForm();
@@ -90,7 +116,7 @@ const UserManager = () => {
   const handleUpdateUser = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.put(getApiUrl(`/admin/users/${selectedUser.id}`)), formData, { headers: getHeaders() });
+      const response = await axios.put(getApiUrl(`/admin/users/${selectedUser.id}`), formData, { headers: getHeaders() });
       if (response.data.success) {
         setShowEditModal(false);
         setSelectedUser(null);
@@ -106,7 +132,7 @@ const UserManager = () => {
 
   const handleDeleteUser = async () => {
     try {
-      const response = await axios.delete(getApiUrl(`/admin/users/${selectedUser.id}`)), { headers: getHeaders() });
+      const response = await axios.delete(getApiUrl(`/admin/users/${selectedUser.id}`), { headers: getHeaders() });
       if (response.data.success) {
         setShowDeleteModal(false);
         setSelectedUser(null);
@@ -128,6 +154,13 @@ const UserManager = () => {
       firstName: user.firstName || '',
       lastName: user.lastName || '',
       password: '',
+      phone: user.phone || '',
+      country: user.country || '',
+      city: user.city || '',
+      userType: user.userType || 'private',
+      fiscalCode: user.fiscalCode || '',
+      vatNumber: user.vatNumber || '',
+      iban: user.iban || '',
       role: user.role,
       level: user.level || 1,
       points: user.points || 0,
@@ -135,6 +168,7 @@ const UserManager = () => {
       experience: user.experience || 0,
       isActive: user.isActive,
       referralCode: user.referralCode || '',
+      sponsorCode: user.sponsorCode || '',
       commissionRate: user.commissionRate || 0.1,
       totalSales: user.totalSales || 0,
       totalCommissions: user.totalCommissions || 0
@@ -151,17 +185,39 @@ const UserManager = () => {
   const loadUserPackages = async (userId) => {
     try {
       setPackagesLoading(true);
-      const response = await axios.get(getApiUrl(`/packages/purchased/${userId}`)), { 
+      const response = await axios.get(getApiUrl(`/packages/purchased/${userId}`), { 
         headers: getHeaders() 
       });
       if (response.data.success) {
-        setUserPackages(response.data.data.packages);
+        // Verifica che i pacchetti non siano mock
+        const packages = response.data.data.packages || [];
+        const realPackages = packages.filter(pkg => 
+          pkg.packageName && 
+          !pkg.packageName.includes('Test') && 
+          !pkg.packageName.includes('Mock') &&
+          pkg.packageId
+        );
+        setUserPackages(realPackages);
       }
     } catch (error) {
       console.error('Errore caricamento pacchetti utente:', error);
       setUserPackages([]);
     } finally {
       setPackagesLoading(false);
+    }
+  };
+
+  const loadAvailablePackages = async () => {
+    try {
+      const response = await axios.get(getApiUrl('/admin/commission-plans'), { 
+        headers: getHeaders() 
+      });
+      if (response.data.success) {
+        setAvailablePackages(response.data.data);
+      }
+    } catch (error) {
+      console.error('Errore caricamento pacchetti disponibili:', error);
+      setAvailablePackages([]);
     }
   };
 
@@ -182,7 +238,7 @@ const UserManager = () => {
 
   const confirmAuthorizeUser = async () => {
     try {
-      const response = await axios.put(getApiUrl(`/admin/users/${selectedUser.id}/authorize`)), {}, { 
+      const response = await axios.put(getApiUrl(`/admin/users/${selectedUser.id}/authorize`), {}, { 
         headers: getHeaders() 
       });
       if (response.data.success) {
@@ -200,7 +256,7 @@ const UserManager = () => {
 
   const confirmSuspendUser = async () => {
     try {
-      const response = await axios.put(getApiUrl(`/admin/users/${selectedUser.id}/suspend`)), {}, { 
+      const response = await axios.put(getApiUrl(`/admin/users/${selectedUser.id}/suspend`), {}, { 
         headers: getHeaders() 
       });
       if (response.data.success) {
@@ -216,6 +272,70 @@ const UserManager = () => {
     }
   };
 
+  // Funzioni per gestione pacchetti
+  const handleManagePackages = async (user) => {
+    setSelectedUser(user);
+    setShowPackagesModal(true);
+    await loadUserPackages(user.id);
+    await loadAvailablePackages();
+  };
+
+  const handleAddPackage = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post(getApiUrl(`/admin/users/${selectedUser.id}/packages`), packageFormData, {
+        headers: getHeaders()
+      });
+      if (response.data.success) {
+        setShowAddPackageModal(false);
+        resetPackageForm();
+        await loadUserPackages(selectedUser.id);
+        setMessage({ type: 'success', text: 'Pacchetto aggiunto con successo!' });
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      }
+    } catch (error) {
+      console.error('Errore aggiunta pacchetto:', error);
+      setMessage({ type: 'error', text: error.response?.data?.error || 'Errore nell\'aggiunta del pacchetto' });
+    }
+  };
+
+  const handleDeletePackage = async (packageId) => {
+    if (!confirm('Sei sicuro di voler rimuovere questo pacchetto?')) {
+      return;
+    }
+
+    try {
+      const response = await axios.delete(getApiUrl(`/admin/users/${selectedUser.id}/packages/${packageId}`), {
+        headers: getHeaders()
+      });
+      if (response.data.success) {
+        await loadUserPackages(selectedUser.id);
+        setMessage({ type: 'success', text: 'Pacchetto rimosso con successo!' });
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      }
+    } catch (error) {
+      console.error('Errore rimozione pacchetto:', error);
+      setMessage({ type: 'error', text: error.response?.data?.error || 'Errore nella rimozione del pacchetto' });
+    }
+  };
+
+  const resetPackageForm = () => {
+    setPackageFormData({
+      packageId: '',
+      packageName: '',
+      cost: 0,
+      packageCode: '',
+      commissionRates: {
+        directSale: 0.1,
+        level1: 0,
+        level2: 0,
+        level3: 0,
+        level4: 0,
+        level5: 0
+      }
+    });
+  };
+
   const resetForm = () => {
     setFormData({
       username: '',
@@ -223,6 +343,13 @@ const UserManager = () => {
       firstName: '',
       lastName: '',
       password: '',
+      phone: '',
+      country: '',
+      city: '',
+      userType: 'private',
+      fiscalCode: '',
+      vatNumber: '',
+      iban: '',
       role: 'entry_ambassador',
       level: 1,
       points: 0,
@@ -230,6 +357,7 @@ const UserManager = () => {
       experience: 0,
       isActive: true,
       referralCode: '',
+      sponsorCode: '',
       commissionRate: 0.1,
       totalSales: 0,
       totalCommissions: 0
@@ -240,11 +368,21 @@ const UserManager = () => {
     const roles = {
       'admin': '👑 Admin',
       'entry_ambassador': '⭐ Entry Ambassador',
-      'silver_ambassador': '🥈 Silver Ambassador',
-      'gold_ambassador': '🥇 Gold Ambassador',
-      'platinum_ambassador': '💎 Platinum Ambassador'
+      'wtw_ambassador': '🌍 WTW Ambassador (€299)',
+      'mlm_ambassador': '🌊 MLM Ambassador (€139)',
+      'pentagame_ambassador': '🎮 Pentagame Ambassador (€199)'
     };
     return roles[role] || role;
+  };
+
+  const getLevelLabel = (level) => {
+    const levelLabels = {
+      'ENTRY': 'Entry',
+      'WTW': 'WTW Ambassador',
+      'MLM': 'MLM Ambassador',
+      'PENTAGAME': 'Pentagame Ambassador'
+    };
+    return levelLabels[level] || level;
   };
 
   const getStatusIcon = (isActive) => {
@@ -253,6 +391,19 @@ const UserManager = () => {
 
   const getStatusLabel = (isActive) => {
     return isActive ? 'Attivo' : 'Inattivo';
+  };
+
+  const getSponsorName = (user) => {
+    if (!user.sponsorCode) return 'N/A';
+    
+    // Trova lo sponsor tra gli utenti usando il referralCode
+    const sponsor = users.find(u => u.referralCode === user.sponsorCode);
+    if (sponsor) {
+      return `${sponsor.firstName} ${sponsor.lastName}`;
+    }
+    
+    // Fallback: mostra il codice sponsor se non trova il nome
+    return user.sponsorCode || 'N/A';
   };
 
   // Filtri e ordinamento
@@ -342,6 +493,9 @@ const UserManager = () => {
               <option value="all">Tutti i ruoli</option>
               <option value="admin">Admin</option>
               <option value="entry_ambassador">Entry Ambassador</option>
+              <option value="wtw_ambassador">WTW Ambassador (17,90€)</option>
+              <option value="mlm_ambassador">MLM Ambassador (69,50€)</option>
+              <option value="pentagame_ambassador">Pentagame Ambassador (242€)</option>
               <option value="silver_ambassador">Silver Ambassador</option>
               <option value="gold_ambassador">Gold Ambassador</option>
               <option value="platinum_ambassador">Platinum Ambassador</option>
@@ -437,6 +591,12 @@ const UserManager = () => {
                       Stato
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Referral Cliente
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Sponsor Diretto
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Punti
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -476,6 +636,26 @@ const UserManager = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-blue-600">
+                            {user.referralCode || 'N/A'}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            Codice Cliente
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-green-600">
+                            {getSponsorName(user) || 'N/A'}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            Sponsor Diretto
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {user.points || 0}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -496,6 +676,13 @@ const UserManager = () => {
                             title="Modifica"
                           >
                             ✏️
+                          </button>
+                          <button
+                            onClick={() => handleManagePackages(user)}
+                            className="text-purple-600 hover:text-purple-900 p-1 rounded hover:bg-purple-50"
+                            title="Gestisci Pacchetti"
+                          >
+                            📦
                           </button>
                           {!user.isActive ? (
                             <button
@@ -636,6 +823,83 @@ const UserManager = () => {
                   />
                 </div>
               </div>
+
+              {/* Nuovi campi del profilo */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Telefono</label>
+                  <input
+                    type="text"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Paese</label>
+                  <input
+                    type="text"
+                    value={formData.country}
+                    onChange={(e) => setFormData({...formData, country: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Città</label>
+                <input
+                  type="text"
+                  value={formData.city}
+                  onChange={(e) => setFormData({...formData, city: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo Utente</label>
+                <select
+                  value={formData.userType}
+                  onChange={(e) => setFormData({...formData, userType: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="private">👤 Privato</option>
+                  <option value="company">🏢 Azienda</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Codice Fiscale</label>
+                <input
+                  type="text"
+                  value={formData.fiscalCode}
+                  onChange={(e) => setFormData({...formData, fiscalCode: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              {formData.userType === 'company' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Partita IVA</label>
+                  <input
+                    type="text"
+                    value={formData.vatNumber}
+                    onChange={(e) => setFormData({...formData, vatNumber: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">IBAN</label>
+                <input
+                  type="text"
+                  value={formData.iban}
+                  onChange={(e) => setFormData({...formData, iban: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
+                  placeholder="IT60X0542811101000000123456"
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Ruolo</label>
                 <select
@@ -644,9 +908,9 @@ const UserManager = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="entry_ambassador">Entry Ambassador</option>
-                  <option value="silver_ambassador">Silver Ambassador</option>
-                  <option value="gold_ambassador">Gold Ambassador</option>
-                  <option value="platinum_ambassador">Platinum Ambassador</option>
+                  <option value="mlm_ambassador">MLM Ambassador (€139)</option>
+                  <option value="pentagame_ambassador">Pentagame Ambassador (€199)</option>
+                  <option value="wtw_ambassador">WTW Ambassador (€299)</option>
                   <option value="admin">Admin</option>
                 </select>
               </div>
@@ -725,21 +989,98 @@ const UserManager = () => {
                   />
                 </div>
               </div>
+
+              {/* Nuovi campi del profilo */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ruolo</label>
-                  <select
-                    value={formData.role}
-                    onChange={(e) => setFormData({...formData, role: e.target.value})}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Telefono</label>
+                  <input
+                    type="text"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="entry_ambassador">Entry Ambassador</option>
-                    <option value="silver_ambassador">Silver Ambassador</option>
-                    <option value="gold_ambassador">Gold Ambassador</option>
-                    <option value="platinum_ambassador">Platinum Ambassador</option>
-                    <option value="admin">Admin</option>
-                  </select>
+                  />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Paese</label>
+                  <input
+                    type="text"
+                    value={formData.country}
+                    onChange={(e) => setFormData({...formData, country: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Città</label>
+                <input
+                  type="text"
+                  value={formData.city}
+                  onChange={(e) => setFormData({...formData, city: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo Utente</label>
+                <select
+                  value={formData.userType}
+                  onChange={(e) => setFormData({...formData, userType: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="private">👤 Privato</option>
+                  <option value="company">🏢 Azienda</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Codice Fiscale</label>
+                <input
+                  type="text"
+                  value={formData.fiscalCode}
+                  onChange={(e) => setFormData({...formData, fiscalCode: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              {formData.userType === 'company' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Partita IVA</label>
+                  <input
+                    type="text"
+                    value={formData.vatNumber}
+                    onChange={(e) => setFormData({...formData, vatNumber: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">IBAN</label>
+                <input
+                  type="text"
+                  value={formData.iban}
+                  onChange={(e) => setFormData({...formData, iban: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
+                  placeholder="IT60X0542811101000000123456"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ruolo</label>
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({...formData, role: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="entry_ambassador">Entry Ambassador</option>
+                  <option value="mlm_ambassador">MLM Ambassador (€139)</option>
+                  <option value="pentagame_ambassador">Pentagame Ambassador (€199)</option>
+                  <option value="wtw_ambassador">WTW Ambassador (€299)</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Livello</label>
                   <input
@@ -749,8 +1090,6 @@ const UserManager = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Punti</label>
                   <input
@@ -760,6 +1099,8 @@ const UserManager = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Token</label>
                   <input
@@ -767,6 +1108,37 @@ const UserManager = () => {
                     value={formData.tokens}
                     onChange={(e) => setFormData({...formData, tokens: parseInt(e.target.value)})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Esperienza</label>
+                  <input
+                    type="number"
+                    value={formData.experience}
+                    onChange={(e) => setFormData({...formData, experience: parseInt(e.target.value)})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Referral Cliente</label>
+                  <input
+                    type="text"
+                    value={formData.referralCode}
+                    onChange={(e) => setFormData({...formData, referralCode: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Codice referral del cliente"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Sponsor Diretto</label>
+                  <input
+                    type="text"
+                    value={formData.sponsorCode}
+                    onChange={(e) => setFormData({...formData, sponsorCode: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Codice dello sponsor diretto"
                   />
                 </div>
               </div>
@@ -887,6 +1259,68 @@ const UserManager = () => {
                     <p className="text-sm text-gray-900">{selectedUser.experience || 0}</p>
                   </div>
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Referral Cliente</label>
+                    <p className="text-sm text-blue-600 font-medium">{selectedUser.referralCode || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Sponsor Diretto</label>
+                    <p className="text-sm text-green-600 font-medium">{getSponsorName(selectedUser)}</p>
+                  </div>
+                </div>
+
+                {/* Nuovi campi del profilo */}
+                <div className="pt-4 border-t border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">📋 Dati Fiscali e Bancari</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Tipo Utente</label>
+                      <p className="text-sm text-gray-900">
+                        {selectedUser.userType === 'company' ? '🏢 Azienda' : '👤 Privato'}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Codice Fiscale</label>
+                      <p className="text-sm text-gray-900">{selectedUser.fiscalCode || 'Non specificato'}</p>
+                    </div>
+                  </div>
+                  {selectedUser.userType === 'company' && (
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Partita IVA</label>
+                        <p className="text-sm text-gray-900">{selectedUser.vatNumber || 'Non specificata'}</p>
+                      </div>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 gap-4 mt-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">IBAN</label>
+                      <p className="text-sm text-gray-900 font-mono">{selectedUser.iban || 'Non specificato'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dati di contatto */}
+                <div className="pt-4 border-t border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">📞 Dati di Contatto</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Telefono</label>
+                      <p className="text-sm text-gray-900">{selectedUser.phone || 'Non specificato'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Paese</label>
+                      <p className="text-sm text-gray-900">{selectedUser.country || 'Non specificato'}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 mt-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Città</label>
+                      <p className="text-sm text-gray-900">{selectedUser.city || 'Non specificata'}</p>
+                    </div>
+                  </div>
+                </div>
                 
                 {/* Sezione Pacchetti Acquistati */}
                 <div className="pt-4 border-t border-gray-200">
@@ -989,6 +1423,173 @@ const UserManager = () => {
                 Annulla
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Packages Management Modal */}
+      {showPackagesModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-gray-900">
+                📦 Gestione Pacchetti - {selectedUser?.username}
+              </h3>
+              <button
+                onClick={() => setShowPackagesModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Add Package Button */}
+            <div className="mb-4">
+              <button
+                onClick={() => setShowAddPackageModal(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                ➕ Aggiungi Pacchetto
+              </button>
+            </div>
+
+            {/* Packages List */}
+            {packagesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : userPackages.length > 0 ? (
+              <div className="space-y-4">
+                {userPackages.map((pkg, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900">{pkg.packageName}</h4>
+                        <p className="text-sm text-gray-600">ID: {pkg.packageId}</p>
+                        <p className="text-sm text-gray-600">Costo: €{pkg.cost}</p>
+                        <p className="text-sm text-gray-600">
+                          Data acquisto: {new Date(pkg.purchaseDate).toLocaleDateString()}
+                        </p>
+                        <div className="mt-2">
+                          <p className="text-xs font-medium text-gray-700">Commissioni:</p>
+                          <div className="grid grid-cols-3 gap-2 mt-1">
+                            <span className="text-xs">Diretta: {pkg.commissionRates.directSale * 100}%</span>
+                            <span className="text-xs">Liv.1: {pkg.commissionRates.level1 * 100}%</span>
+                            <span className="text-xs">Liv.2: {pkg.commissionRates.level2 * 100}%</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleDeletePackage(pkg.packageId)}
+                        className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                        title="Rimuovi Pacchetto"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p>Nessun pacchetto acquistato</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Add Package Modal */}
+      {showAddPackageModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">➕ Aggiungi Pacchetto</h3>
+            <form onSubmit={handleAddPackage} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Seleziona Pacchetto</label>
+                <select
+                  value={packageFormData.packageId}
+                  onChange={(e) => {
+                    const selected = availablePackages.find(p => p.id === parseInt(e.target.value));
+                    if (selected) {
+                      setPackageFormData({
+                        ...packageFormData,
+                        packageId: selected.id,
+                        packageName: selected.name,
+                        cost: selected.cost,
+                        packageCode: selected.code,
+                        commissionRates: {
+                          directSale: selected.directSale || 0.1,
+                          level1: selected.level1 || 0,
+                          level2: selected.level2 || 0,
+                          level3: selected.level3 || 0,
+                          level4: selected.level4 || 0,
+                          level5: selected.level5 || 0
+                        }
+                      });
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Seleziona un pacchetto...</option>
+                  {availablePackages.map((pkg) => (
+                    <option key={pkg.id} value={pkg.id}>
+                      {pkg.name} - €{pkg.cost}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {packageFormData.packageId && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nome Pacchetto</label>
+                    <input
+                      type="text"
+                      value={packageFormData.packageName}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                      readOnly
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Costo (€)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={packageFormData.cost}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                      readOnly
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Commissione Diretta (%)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={packageFormData.commissionRates.directSale * 100}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                      readOnly
+                    />
+                  </div>
+                </>
+              )}
+              <div className="flex space-x-3">
+                <button
+                  type="submit"
+                  disabled={!packageFormData.packageId}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  Aggiungi
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddPackageModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                >
+                  Annulla
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

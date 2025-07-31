@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { getApiUrl } from '../../config/api';
 
 const KYCForm = ({ onKYCComplete, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -15,6 +16,9 @@ const KYCForm = ({ onKYCComplete, onClose, onSuccess }) => {
     vatNumber: '',
     sdiCode: ''
   });
+  
+  const [contractAccepted, setContractAccepted] = useState(false);
+  const [showContract, setShowContract] = useState(false);
   
   const [files, setFiles] = useState({
     idFront: null,
@@ -149,6 +153,11 @@ const KYCForm = ({ onKYCComplete, onClose, onSuccess }) => {
       return false;
     }
     
+    if (!contractAccepted) {
+      setError('Devi accettare il contratto per procedere');
+      return false;
+    }
+    
     return true;
   };
 
@@ -170,6 +179,9 @@ const KYCForm = ({ onKYCComplete, onClose, onSuccess }) => {
         formDataToSend.append(key, formData[key]);
       });
       
+      // Aggiungi accettazione contratto
+      formDataToSend.append('contractAccepted', contractAccepted.toString());
+      
       // Aggiungi file
       Object.keys(files).forEach(key => {
         if (files[key]) {
@@ -177,7 +189,7 @@ const KYCForm = ({ onKYCComplete, onClose, onSuccess }) => {
         }
       });
 
-      const response = await axios.post('/api/kyc/submit', formDataToSend, {
+      const response = await axios.post(getApiUrl('/kyc/submit'), formDataToSend, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'multipart/form-data'
@@ -987,6 +999,67 @@ const KYCForm = ({ onKYCComplete, onClose, onSuccess }) => {
                     Foto del tuo viso (max 5MB)
                   </p>
                 </div>
+              </div>
+            </div>
+
+            {/* Contratto Digitale */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <h3 className="font-semibold text-yellow-800 mb-3">📋 Contratto di Collaborazione</h3>
+              
+              <div className="mb-4">
+                <button
+                  type="button"
+                  onClick={() => setShowContract(!showContract)}
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium underline"
+                >
+                  {showContract ? 'Nascondi Contratto' : 'Leggi Contratto Completo'}
+                </button>
+              </div>
+              
+              {showContract && (
+                <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4 max-h-64 overflow-y-auto text-sm">
+                  <h4 className="font-semibold mb-2">CONTRATTO DI COLLABORAZIONE MY.PENTASHOP.WORLD</h4>
+                  
+                  <div className="space-y-3 text-gray-700">
+                    <p><strong>Art. 1 - Oggetto</strong></p>
+                    <p>Il presente contratto regola la collaborazione tra MY.PENTASHOP.WORLD (di seguito "Società") e il Collaboratore per la vendita di prodotti eco-friendly e la partecipazione al programma MLM.</p>
+                    
+                    <p><strong>Art. 2 - Obblighi del Collaboratore</strong></p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li>Rispettare le normative fiscali e commerciali vigenti</li>
+                      <li>Utilizzare solo materiali promozionali approvati dalla Società</li>
+                      <li>Non effettuare vendite al di fuori del territorio autorizzato</li>
+                      <li>Mantenere un comportamento professionale e etico</li>
+                    </ul>
+                    
+                    <p><strong>Art. 3 - Commissioni</strong></p>
+                    <p>Le commissioni sono calcolate sull'importo netto (esclusa IVA) e pagate secondo i termini stabiliti nel piano commissioni.</p>
+                    
+                    <p><strong>Art. 4 - Privacy e GDPR</strong></p>
+                    <p>Il trattamento dei dati personali avviene nel rispetto del GDPR e della normativa vigente.</p>
+                    
+                    <p><strong>Art. 5 - Durata e Recesso</strong></p>
+                    <p>Il contratto ha durata annuale e può essere disdetto con preavviso di 30 giorni.</p>
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  id="contractAccepted"
+                  checked={contractAccepted}
+                  onChange={(e) => setContractAccepted(e.target.checked)}
+                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  required
+                />
+                <label htmlFor="contractAccepted" className="text-sm text-gray-700">
+                  <span className="font-medium">Accetto il contratto di collaborazione</span>
+                  <br />
+                  <span className="text-xs text-gray-500">
+                    Dichiaro di aver letto e compreso il contratto e accetto di rispettare tutti i termini e condizioni per la vendita e l'acquisto di prodotti MY.PENTASHOP.WORLD
+                  </span>
+                </label>
               </div>
             </div>
 

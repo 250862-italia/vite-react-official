@@ -1,7 +1,7 @@
 [
   {
     "id": 1,
-    "name": "WASH THE WORLD AMBASSADOR",
+    "name": "MY.PENTASHOP.WORLD AMBASSADOR",
     "code": "ambassador",
     "directSale": 0.2,
     "level1": 0.06,
@@ -12,7 +12,7 @@
     "minPoints": 100,
     "minTasks": 3,
     "minSales": 500,
-    "description": "Piano base per ambasciatori Wash The World",
+    "description": "Piano base per ambasciatori MY.PENTASHOP.WORLD",
     "isActive": true,
     "createdAt": "2025-01-15",
     "updatedAt": "2025-01-15"

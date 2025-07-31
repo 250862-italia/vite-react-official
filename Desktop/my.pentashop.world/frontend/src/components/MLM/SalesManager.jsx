@@ -167,7 +167,7 @@ const SalesManager = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-green-600">Commissioni</p>
-              <p className="text-2xl font-bold text-green-800">€{stats.totalCommissions}</p>
+                              <p className="text-2xl font-bold text-green-800">€{Math.round(stats.totalCommissions)}</p>
             </div>
             <DollarSign className="h-8 w-8 text-green-600" />
           </div>
@@ -262,7 +262,7 @@ const SalesManager = () => {
                 </div>
                 <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
                   <span className="text-sm text-green-700">Commissioni Totali</span>
-                  <span className="font-semibold text-green-900">€{stats.totalCommissions}</span>
+                  <span className="font-semibold text-green-900">€{Math.round(stats.totalCommissions)}</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
                   <span className="text-sm text-purple-700">Numero Ordini</span>

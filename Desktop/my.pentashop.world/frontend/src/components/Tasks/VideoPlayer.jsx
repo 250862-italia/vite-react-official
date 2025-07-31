@@ -1,5 +1,34 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import { getApiUrl } from '../../config/api';
+
+// Funzione per verificare se l'URL è di YouTube
+const isYouTubeUrl = (url) => {
+  return url && (url.includes('youtube.com') || url.includes('youtu.be'));
+};
+
+// Funzione per convertire URL YouTube in URL embed
+const getYouTubeEmbedUrl = (url) => {
+  if (!url) return '';
+  
+  // Estrai l'ID del video da diversi formati di URL YouTube
+  let videoId = '';
+  
+  if (url.includes('youtube.com/watch?v=')) {
+    videoId = url.split('v=')[1];
+  } else if (url.includes('youtu.be/')) {
+    videoId = url.split('youtu.be/')[1];
+  } else if (url.includes('youtube.com/embed/')) {
+    videoId = url.split('embed/')[1];
+  }
+  
+  // Rimuovi eventuali parametri aggiuntivi
+  if (videoId.includes('&')) {
+    videoId = videoId.split('&')[0];
+  }
+  
+  return `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1`;
+};
 
 const VideoPlayer = ({ task, onComplete }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -17,7 +46,7 @@ const VideoPlayer = ({ task, onComplete }) => {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const response = await axios.get(getApiUrl(`/tasks/${task.id}/video`)), {
+        const response = await axios.get(getApiUrl(`/tasks/${task.id}/video`), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -62,7 +91,7 @@ const VideoPlayer = ({ task, onComplete }) => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(getApiUrl(`/tasks/${task.id}/video/complete`)), {
+      const response = await axios.post(getApiUrl(`/tasks/${task.id}/video/complete`), {
         watchedDuration: currentTime,
         totalDuration: duration
       }, {
@@ -152,23 +181,41 @@ const VideoPlayer = ({ task, onComplete }) => {
       {/* Video Player */}
       <div className="relative bg-black rounded-lg overflow-hidden">
         {videoData.videoUrl ? (
-          <video
-            ref={videoRef}
-            className="w-full h-auto"
-            controls
-            onPlay={handlePlay}
-            onPause={handlePause}
-            onTimeUpdate={handleTimeUpdate}
-            onEnded={handleVideoEnd}
-            onLoadedMetadata={() => {
-              if (videoRef.current) {
-                setDuration(videoRef.current.duration);
-              }
-            }}
-          >
-            <source src={videoData.videoUrl} type="video/mp4" />
-            Il tuo browser non supporta il tag video.
-          </video>
+          isYouTubeUrl(videoData.videoUrl) ? (
+            <div className="aspect-video">
+              <iframe
+                ref={videoRef}
+                className="w-full h-full"
+                src={getYouTubeEmbedUrl(videoData.videoUrl)}
+                title={videoData.title}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                onLoad={() => {
+                  // Per YouTube, impostiamo una durata fissa o gestiamo diversamente
+                  setDuration(300); // 5 minuti di default per YouTube
+                }}
+              ></iframe>
+            </div>
+          ) : (
+            <video
+              ref={videoRef}
+              className="w-full h-auto"
+              controls
+              onPlay={handlePlay}
+              onPause={handlePause}
+              onTimeUpdate={handleTimeUpdate}
+              onEnded={handleVideoEnd}
+              onLoadedMetadata={() => {
+                if (videoRef.current) {
+                  setDuration(videoRef.current.duration);
+                }
+              }}
+            >
+              <source src={videoData.videoUrl} type="video/mp4" />
+              Il tuo browser non supporta il tag video.
+            </video>
+          )
         ) : (
           <div className="aspect-video bg-neutral-100 flex items-center justify-center">
             <div className="text-center">
@@ -182,19 +229,21 @@ const VideoPlayer = ({ task, onComplete }) => {
         )}
       </div>
 
-      {/* Progress Bar */}
-      <div className="mt-4">
-        <div className="flex justify-between text-sm text-neutral-600 mb-2">
-          <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(duration)}</span>
+      {/* Progress Bar - Solo per video non YouTube */}
+      {videoData.videoUrl && !isYouTubeUrl(videoData.videoUrl) && (
+        <div className="mt-4">
+          <div className="flex justify-between text-sm text-neutral-600 mb-2">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(duration)}</span>
+          </div>
+          <div className="w-full bg-neutral-200 rounded-full h-2">
+            <div 
+              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
         </div>
-        <div className="w-full bg-neutral-200 rounded-full h-2">
-          <div 
-            className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          ></div>
-        </div>
-      </div>
+      )}
 
       {/* Completion Status */}
       {isCompleted && (
@@ -204,6 +253,24 @@ const VideoPlayer = ({ task, onComplete }) => {
             <span className="text-green-800 font-medium">
               Video completato! Puoi procedere al prossimo task.
             </span>
+          </div>
+        </div>
+      )}
+
+      {/* Manual Completion Button for YouTube Videos */}
+      {videoData.videoUrl && isYouTubeUrl(videoData.videoUrl) && !isCompleted && (
+        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="text-center">
+            <p className="text-blue-800 mb-3">
+              🎥 <strong>Video YouTube</strong><br/>
+              Dopo aver guardato il video, clicca il pulsante per completare il task.
+            </p>
+            <button
+              onClick={handleVideoEnd}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200"
+            >
+              ✅ Ho completato il video
+            </button>
           </div>
         </div>
       )}

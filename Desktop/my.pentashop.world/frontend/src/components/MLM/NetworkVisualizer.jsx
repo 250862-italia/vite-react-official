@@ -9,6 +9,8 @@ import {
   DollarSign,
   BarChart3
 } from 'lucide-react';
+import { getApiUrl } from '../../config/api';
+import { formatCurrency, formatPercentage } from '../../utils/formatters';
 
 const NetworkVisualizer = () => {
   const [networkData, setNetworkData] = useState(null);
@@ -24,36 +26,50 @@ const NetworkVisualizer = () => {
       const token = localStorage.getItem('token');
       const userId = JSON.parse(localStorage.getItem('user'))?.id;
       
+      console.log('🔍 NetworkVisualizer - Token:', token ? 'Presente' : 'Mancante');
+      console.log('🔍 NetworkVisualizer - User ID:', userId);
+      
       if (!userId) {
-        console.error('User ID non trovato');
+        console.error('❌ User ID non trovato');
         setLoading(false);
         return;
       }
       
-      const response = await fetch(`/api/ambassador/network/${userId}`, {
+      if (!token) {
+        console.error('❌ Token non trovato');
+        setLoading(false);
+        return;
+      }
+      
+      const url = getApiUrl(`/ambassador/network/${userId}`);
+      console.log('🔍 NetworkVisualizer - URL:', url);
+      
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
+      
+      console.log('🔍 NetworkVisualizer - Response status:', response.status);
+      
       const data = await response.json();
+      console.log('🔍 NetworkVisualizer - Response data:', data);
       
       if (data.success) {
         setNetworkData(data.data);
+        console.log('✅ NetworkVisualizer - Dati caricati con successo');
+      } else {
+        console.error('❌ NetworkVisualizer - API error:', data.error);
       }
     } catch (error) {
-      console.error('Errore nel caricamento dati rete:', error);
+      console.error('❌ Errore nel caricamento dati rete:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('it-IT', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
-  };
+
 
   const getPlanColor = (plan) => {
     switch (plan) {
@@ -102,10 +118,16 @@ const NetworkVisualizer = () => {
 
   const { userNetwork, networkMembers, networkByLevel, totalMembers, levels } = networkData;
 
+  // Gestione difensiva per evitare errori
+  const safeNetworkMembers = networkMembers || [];
+  const safeNetworkByLevel = networkByLevel || {};
+  const safeTotalMembers = totalMembers || 0;
+  const safeLevels = levels || 0;
+
   // Filtra membri per livello selezionato
   const filteredMembers = selectedLevel === 'all' 
-    ? networkMembers 
-    : networkMembers.filter(member => member.level === parseInt(selectedLevel));
+    ? safeNetworkMembers 
+    : safeNetworkMembers.filter(member => member.level === parseInt(selectedLevel));
 
   return (
     <div className="bg-white rounded-xl shadow-sm border p-6">
@@ -121,10 +143,10 @@ const NetworkVisualizer = () => {
         </div>
         <div className="flex items-center space-x-2">
           <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-            {totalMembers} membri
+            {safeTotalMembers} membri
           </div>
           <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-            {levels} livelli
+            {safeLevels} livelli
           </div>
         </div>
       </div>
@@ -136,7 +158,7 @@ const NetworkVisualizer = () => {
             <Users className="h-5 w-5" />
           </div>
           <div className="stats-content">
-            <div className="stats-number text-blue-600">{totalMembers}</div>
+            <div className="stats-number text-blue-600">{safeTotalMembers}</div>
             <div className="stats-label">Membri Totali</div>
           </div>
         </div>
@@ -146,7 +168,7 @@ const NetworkVisualizer = () => {
             <TrendingUp className="h-5 w-5" />
           </div>
           <div className="stats-content">
-            <div className="stats-number text-green-600">{levels}</div>
+            <div className="stats-number text-green-600">{safeLevels}</div>
             <div className="stats-label">Livelli Attivi</div>
           </div>
         </div>
@@ -157,7 +179,7 @@ const NetworkVisualizer = () => {
           </div>
           <div className="stats-content">
             <div className="stats-number text-purple-600">
-              {networkMembers.filter(m => m.plan === 'pentagame').length}
+              {safeNetworkMembers.filter(m => m.plan === 'pentagame').length}
             </div>
             <div className="stats-label">Pentagame</div>
           </div>
@@ -169,7 +191,7 @@ const NetworkVisualizer = () => {
           </div>
           <div className="stats-content">
             <div className="stats-number text-orange-600">
-              {networkMembers.filter(m => m.plan === 'ambassador').length}
+              {safeNetworkMembers.filter(m => m.plan === 'ambassador').length}
             </div>
             <div className="stats-label">Ambassador</div>
           </div>
@@ -192,7 +214,7 @@ const NetworkVisualizer = () => {
           >
             Tutti i Livelli
           </button>
-          {Object.keys(networkByLevel).map(level => (
+          {Object.keys(safeNetworkByLevel).map(level => (
             <button
               key={level}
               onClick={() => setSelectedLevel(level)}
@@ -232,7 +254,7 @@ const NetworkVisualizer = () => {
                       </div>
                       <div className="flex items-center space-x-2 mt-1">
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getPlanColor(member.plan)}`}>
-                          {member.plan === 'ambassador' ? 'WASH THE WORLD AMBASSADOR' : 'PENTAGAME'}
+                          {member.plan === 'ambassador' ? 'MY.PENTASHOP.WORLD AMBASSADOR' : 'PENTAGAME'}
                         </span>
                         <span className="text-xs text-neutral-500">
                           Livello {member.level}

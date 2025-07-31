@@ -9,6 +9,7 @@ import {
   Target,
   BarChart3
 } from 'lucide-react';
+import { formatCurrency, formatPercentage, safeCalculate } from '../../utils/formatters';
 
 const CommissionCalculator = () => {
   const [saleAmount, setSaleAmount] = useState(1000);
@@ -73,16 +74,7 @@ const CommissionCalculator = () => {
     }
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('it-IT', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
-  };
 
-  const formatPercentage = (rate) => {
-    return `${(rate * 100).toFixed(1)}%`;
-  };
 
   useEffect(() => {
     if (saleAmount > 0) {
