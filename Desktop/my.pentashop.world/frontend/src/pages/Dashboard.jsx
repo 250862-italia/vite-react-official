@@ -381,23 +381,7 @@ function Dashboard() {
                   </button>
                 </div>
 
-                {/* Rete MLM & Referral Unificati */}
-                <div className="bg-white bg-opacity-20 rounded-lg p-6 backdrop-blur-sm hover:bg-opacity-30 transition-all duration-200">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <span className="text-3xl">👥</span>
-                    <h4 className="text-lg font-semibold">Gestione Referral</h4>
-                  </div>
-                  <p className="text-blue-100 mb-4 text-sm">
-                    Gestisci i tuoi referral e inviti
-                  </p>
-                  <div className="text-2xl font-bold mb-2">👥</div>
-                  <button
-                    onClick={() => navigate('/network-referral')}
-                    className="w-full bg-white bg-opacity-25 hover:bg-opacity-35 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105"
-                  >
-                    👥 Vai ai Referral
-                  </button>
-                </div>
+
 
                 {/* Strumenti Ambassador */}
                 <div className="bg-white bg-opacity-20 rounded-lg p-6 backdrop-blur-sm hover:bg-opacity-30 transition-all duration-200">
