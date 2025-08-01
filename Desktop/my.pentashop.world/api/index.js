@@ -37,7 +37,7 @@ app.use(cors());
 app.use(express.json());
 
 // Rate limiting
-const rateLimit = require('express-rate-limit');
+import rateLimit from 'express-rate-limit';
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minuti
   max: 100 // limite per IP
