@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "name": "Pacchetto Base",
+    "description": "Pacchetto iniziale per iniziare",
+    "price": 99.00,
+    "commission": 10.00,
+    "active": true,
+    "features": [
+      "Accesso base al sistema",
+      "Supporto email",
+      "Dashboard base"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Pacchetto Premium",
+    "description": "Pacchetto avanzato con più funzionalità",
+    "price": 199.00,
+    "commission": 20.00,
+    "active": true,
+    "features": [
+      "Tutte le funzionalità base",
+      "Supporto prioritario",
+      "Dashboard avanzata",
+      "Report dettagliati"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Pacchetto Enterprise",
+    "description": "Pacchetto completo per business",
+    "price": 499.00,
+    "commission": 30.00,
+    "active": true,
+    "features": [
+      "Tutte le funzionalità premium",
+      "Supporto dedicato",
+      "API personalizzate",
+      "White label",
+      "Training incluso"
+    ]
+  }
+] 
