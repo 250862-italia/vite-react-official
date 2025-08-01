@@ -2,7 +2,7 @@
 const API_CONFIG = {
   // URL base per le API
   baseURL: process.env.NODE_ENV === 'production' 
-    ? 'https://your-backend-url.com/api'  // TODO: Sostituire con URL backend deployato
+    ? 'https://wash-the-world-frontend-production-33b3.up.railway.app/api'  // Backend Railway
     : 'http://localhost:3001/api',                  // URL di sviluppo
   
   // Timeout per le richieste
