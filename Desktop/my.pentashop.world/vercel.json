@@ -17,7 +17,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/frontend/api/index.js"
+      "dest": "/api/index.js"
     },
     {
       "src": "/(.*)",
@@ -25,7 +25,7 @@
     }
   ],
   "functions": {
-    "frontend/api/index.js": {
+    "api/index.js": {
       "runtime": "nodejs18.x"
     }
   },
