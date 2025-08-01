@@ -225,30 +225,22 @@ const AmbassadorStatus = ({ user }) => {
               </div>
             </div>
 
-            {/* KYC Status Indicator */}
-            <div className={`border rounded-lg p-4 ${
-              user?.kycStatus === 'completed' 
-                ? 'bg-green-50 border-green-200' 
-                : 'bg-yellow-50 border-yellow-200'
-            }`}>
+            {/* Ambassador Status Indicator */}
+            <div className="border rounded-lg p-4 bg-green-50 border-green-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Verifica Identità</p>
-                  <p className={`text-lg font-bold ${
-                    user?.kycStatus === 'completed' ? 'text-green-600' : 'text-yellow-600'
-                  }`}>
-                    {user?.kycStatus === 'completed' ? '✅ Completata' : '⚠️ Necessaria'}
+                  <p className="text-sm text-gray-600">Stato Ambassador</p>
+                  <p className="text-lg font-bold text-green-600">
+                    ✅ Attivo
                   </p>
                 </div>
                 <span className="text-2xl">
-                  {user?.kycStatus === 'completed' ? '🆔' : '🆔'}
+                  👑
                 </span>
               </div>
-              {user?.kycStatus !== 'completed' && (
-                <p className="text-xs text-yellow-700 mt-1">
-                  Completa il KYC per sbloccare tutte le funzionalità
-                </p>
-              )}
+              <p className="text-xs text-green-700 mt-1">
+                Ambassador verificato e attivo
+              </p>
             </div>
           </div>
 
@@ -557,28 +549,28 @@ const AmbassadorStatus = ({ user }) => {
                 </p>
                 <div className="text-2xl font-bold mb-2">🎯</div>
                 <button
-                  onClick={() => window.location.href = 'http://localhost:5173/mlm#:~:text=%F0%9F%91%A5-,Referral,-%F0%9F%86%94%20KYC'}
+                  onClick={() => window.location.href = '/mlm'}
                   className="w-full bg-white bg-opacity-25 hover:bg-opacity-35 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105"
                 >
                   👥 Vai ai Referral
                 </button>
               </div>
 
-              {/* KYC */}
+              {/* Strumenti Ambassador */}
               <div className="bg-white bg-opacity-20 rounded-lg p-6 backdrop-blur-sm hover:bg-opacity-30 transition-all duration-200">
                 <div className="flex items-center space-x-3 mb-4">
-                  <span className="text-3xl">🆔</span>
-                  <h4 className="text-lg font-semibold">KYC</h4>
+                  <span className="text-3xl">👑</span>
+                  <h4 className="text-lg font-semibold">Strumenti</h4>
                 </div>
                 <p className="text-blue-100 mb-4 text-sm">
-                  Verifica la tua identità
+                  Gestione network e commissioni
                 </p>
-                <div className="text-2xl font-bold mb-2">🔐</div>
+                <div className="text-2xl font-bold mb-2">⚙️</div>
                 <button
-                  onClick={() => window.location.href = 'http://localhost:5173/mlm#:~:text=%F0%9F%91%A5-,Referral,-%F0%9F%86%94%20KYC'}
+                  onClick={() => window.location.href = '/dashboard'}
                   className="w-full bg-white bg-opacity-25 hover:bg-opacity-35 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105"
                 >
-                  🆔 Vai al KYC
+                  👑 Dashboard
                 </button>
               </div>
 
@@ -593,7 +585,7 @@ const AmbassadorStatus = ({ user }) => {
                 </p>
                 <div className="text-2xl font-bold mb-2">💬</div>
                 <button
-                  onClick={() => window.location.href = 'http://localhost:5173/mlm#:~:text=%F0%9F%91%A5-,Referral,-%F0%9F%86%94%20KYC'}
+                  onClick={() => window.location.href = '/communications'}
                   className="w-full bg-white bg-opacity-25 hover:bg-opacity-35 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105"
                 >
                   📞 Vai alle Comunicazioni
