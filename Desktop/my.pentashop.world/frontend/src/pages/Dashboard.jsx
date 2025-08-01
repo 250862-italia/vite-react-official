@@ -9,7 +9,7 @@ import WebSocketStatus from '../components/Layout/WebSocketStatus';
 import Footer from '../components/Layout/Footer';
 import TaskCard from '../components/Tasks/TaskCard';
 import TaskExecutor from '../components/Tasks/TaskExecutor';
-import KYCForm from '../components/KYC/KYCForm';
+
 
 function Dashboard() {
   const [user, setUser] = useState(null);
@@ -18,8 +18,7 @@ function Dashboard() {
   const [selectedTask, setSelectedTask] = useState(null);
   const [showTaskExecutor, setShowTaskExecutor] = useState(false);
   const [completionMessage, setCompletionMessage] = useState(null);
-  const [showKYC, setShowKYC] = useState(false);
-  const [kycMessage, setKycMessage] = useState(null);
+
   const [specialBadge, setSpecialBadge] = useState(null);
   const [showBadgeModal, setShowBadgeModal] = useState(false);
   const navigate = useNavigate();
@@ -180,32 +179,7 @@ function Dashboard() {
     setSelectedTask(null);
   };
 
-  const handleKYCComplete = (kycData) => {
-    // Aggiorna lo stato utente con i dati KYC
-    const updatedUser = {
-      ...user,
-      kycStatus: 'completed',
-      kycData: kycData
-    };
-    setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    
-    // Mostra messaggio di successo
-    setKycMessage({
-      type: 'success',
-      title: '✅ KYC Completato!',
-      message: 'La tua verifica identità è stata completata con successo.',
-      details: 'Ora puoi accedere a tutte le funzionalità MLM avanzate.'
-    });
-    
-    // Nascondi il form KYC
-    setShowKYC(false);
-    
-    // Nascondi il messaggio dopo 5 secondi
-    setTimeout(() => {
-      setKycMessage(null);
-    }, 5000);
-  };
+
 
   // Funzione per ottenere il ruolo specifico basato sui pacchetti acquistati
   const getSpecificRole = (user) => {
@@ -425,21 +399,21 @@ function Dashboard() {
                   </button>
                 </div>
 
-                {/* KYC */}
+                {/* Strumenti Ambassador */}
                 <div className="bg-white bg-opacity-20 rounded-lg p-6 backdrop-blur-sm hover:bg-opacity-30 transition-all duration-200">
                   <div className="flex items-center space-x-3 mb-4">
-                    <span className="text-3xl">🆔</span>
-                    <h4 className="text-lg font-semibold">KYC</h4>
+                    <span className="text-3xl">👑</span>
+                    <h4 className="text-lg font-semibold">Strumenti Ambassador</h4>
                   </div>
                   <p className="text-blue-100 mb-4 text-sm">
-                    Verifica la tua identità
+                    Gestione network e commissioni
                   </p>
-                  <div className="text-2xl font-bold mb-2">🔐</div>
+                  <div className="text-2xl font-bold mb-2">⚙️</div>
                   <button
-                    onClick={() => navigate('/kyc')}
+                    onClick={() => navigate('/mlm')}
                     className="w-full bg-white bg-opacity-25 hover:bg-opacity-35 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105"
                   >
-                    🆔 Vai al KYC
+                    👑 Dashboard MLM
                   </button>
                 </div>
 
@@ -551,13 +525,7 @@ function Dashboard() {
           />
         )}
 
-        {/* KYC Modal */}
-        {showKYC && (
-          <KYCForm
-            onComplete={handleKYCComplete}
-            onClose={() => setShowKYC(false)}
-          />
-        )}
+
 
         {/* Special Badge Modal */}
         {showBadgeModal && specialBadge && (
