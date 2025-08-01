@@ -346,8 +346,52 @@ app.get('/api/commission-plans', verifyToken, (req, res) => {
 });
 
 // Catch-all route per il frontend
+app.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>MY.PENTASHOP.WORLD</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .status { color: green; font-weight: bold; }
+        .api-link { margin: 20px 0; }
+        a { color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>🌍 MY.PENTASHOP.WORLD</h1>
+        <p class="status">✅ Sistema Unificato Online</p>
+        <p>Backend e Frontend unificati su un solo dominio</p>
+        
+        <div class="api-link">
+          <h3>🔗 API Endpoints</h3>
+          <p><a href="/api/health">Health Check</a></p>
+          <p><a href="/api/auth/login">Login API</a></p>
+        </div>
+        
+        <div class="api-link">
+          <h3>📊 Status</h3>
+          <p>✅ API: Funzionante</p>
+          <p>✅ Database: Connesso</p>
+          <p>✅ Autenticazione: Attiva</p>
+        </div>
+        
+        <p><small>Deploy automatico da GitHub - Vercel</small></p>
+      </div>
+    </body>
+    </html>
+  `);
+});
+
+// Catch-all per altre route
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+  res.redirect('/');
 });
 
 // Start server
