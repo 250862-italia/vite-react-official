@@ -1,41 +1,31 @@
 {
-  "name": "wash-the-world",
+  "name": "my-pentashop-world",
   "version": "1.0.0",
-  "description": "🚀 MY.PENTASHOP.WORLD Platform - Gestionale MLM & E-commerce",
-  "main": "index.js",
+  "description": "MY.PENTASHOP.WORLD - Sistema unificato backend/frontend",
+  "main": "api/index.js",
+  "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "cd backend && npm run dev",
-    "build": "cd frontend && npm run build",
-    "start": "cd backend && npm start",
-    "test": "npm run test:frontend && npm run test:backend",
-    "test:frontend": "cd frontend && npm test",
-    "test:backend": "cd backend && npm test",
-    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install"
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build:unified",
+    "start": "node api/index.js",
+    "test": "curl http://localhost:3001/api/health"
   },
-  "keywords": [
-    "mlm",
-    "e-commerce",
-    "wash-the-world",
-    "react",
-    "nodejs",
-    "vercel"
-  ],
-  "author": "250862-italia",
-  "license": "MIT",
-  "devDependencies": {
-    "concurrently": "^8.2.2",
-    "vercel": "^44.6.4"
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "express-rate-limit": "^7.1.5"
   },
-  "workspaces": [
-    "frontend",
-    "backend"
-  ],
   "engines": {
     "node": ">=18.0.0"
   },
-  "dependencies": {
-    "axios": "^1.11.0"
-  }
+  "keywords": [
+    "pentashop",
+    "mlm",
+    "ambassador",
+    "commissioni"
+  ],
+  "author": "MY.PENTASHOP.WORLD",
+  "license": "MIT"
 }
