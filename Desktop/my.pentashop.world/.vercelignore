@@ -1,0 +1,17 @@
+# Ignora file non necessari per il deploy
+node_modules/
+.git/
+.gitignore
+README.md
+*.log
+.env
+.env.local
+.DS_Store
+Thumbs.db
+
+# Ignora file di sviluppo
+frontend/node_modules/
+backend/node_modules/
+*.md
+test_*.js
+debug_*.js 
