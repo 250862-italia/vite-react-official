@@ -12,14 +12,28 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Importa i dati dal backend
-import users from '../backend/data/users.json' assert { type: 'json' };
-import tasks from '../backend/data/tasks.json' assert { type: 'json' };
-import commissions from '../backend/data/commissions.json' assert { type: 'json' };
-import commissionPlans from '../backend/data/commission-plans.json' assert { type: 'json' };
-import sales from '../backend/data/sales.json' assert { type: 'json' };
-import referrals from '../backend/data/referrals.json' assert { type: 'json' };
-import packages from '../backend/data/packages.json' assert { type: 'json' };
-import adminRequests from '../backend/data/admin-requests.json' assert { type: 'json' };
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Funzione per caricare JSON
+const loadJSON = (filename) => {
+  const filePath = join(__dirname, '../backend/data', filename);
+  return JSON.parse(readFileSync(filePath, 'utf8'));
+};
+
+// Carica i dati
+const users = loadJSON('users.json');
+const tasks = loadJSON('tasks.json');
+const commissions = loadJSON('commissions.json');
+const commissionPlans = loadJSON('commission-plans.json');
+const sales = loadJSON('sales.json');
+const referrals = loadJSON('referrals.json');
+const packages = loadJSON('packages.json');
+const adminRequests = loadJSON('admin-requests.json');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
