@@ -76,6 +76,16 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+// Health check endpoint per Railway
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
 // Funzioni di utilità
 function loadUsersFromFile() {
   try {
