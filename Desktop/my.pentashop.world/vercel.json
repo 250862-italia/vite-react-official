@@ -1,35 +1,36 @@
 {
   "version": 2,
-  "public": true,
   "builds": [
     {
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
         "distDir": "dist",
-        "buildCommand": "npm run build"
+        "buildCommand": "npm run build:unified"
       }
     },
     {
-      "src": "backend/src/index.js",
+      "src": "frontend/api/index.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/backend/src/index.js"
-    },
-    {
-      "src": "/health",
-      "dest": "/backend/src/index.js"
+      "dest": "/frontend/api/index.js"
     },
     {
       "src": "/(.*)",
-      "dest": "/frontend/$1"
+      "dest": "/frontend/dist/$1"
     }
   ],
+  "functions": {
+    "frontend/api/index.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "JWT_SECRET": "@jwt-secret"
   }
 } 
