@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && cp -r ../backend/data ./dist/",
     "build:unified": "vite build && cp -r ../backend/data ./dist/",
     "vercel-build": "vite build && cp -r ../backend/data ./dist/",
     "start": "node api/index.js",
